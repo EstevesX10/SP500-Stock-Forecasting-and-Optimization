@@ -163,6 +163,9 @@ def getStockMarketInformation(stockSymbol:str=None, config:dict=None, pathsConfi
         stockHistory['Date'] = stockHistory['Date'].apply(lambda x: str(x).split(' ')[0])
         stockHistory['Date'] = stockHistory['Date'].map(lambda dateString : strToDatetime(dateString))
 
+        # Replace the index with the 'Date'
+        stockHistory.index = stockHistory['Date']
+
         # Saving the History data into a csv file
         stockHistory.to_csv(stockFilePath, sep=',', index=False)
 
