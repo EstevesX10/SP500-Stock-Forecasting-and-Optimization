@@ -1,4 +1,4 @@
-name: NVIDIA
+name: SPX
 channels:
   - conda-forge
   - defaults
@@ -11,5 +11,5 @@ dependencies:
   - matplotlib==3.7.3
   - jupyter==1.0.0
   - pip:
-    - yfinance==0.2.41
-    - tensorflow==2.13.0
+      - yfinance==0.2.41
+      - tensorflow==2.13.0
