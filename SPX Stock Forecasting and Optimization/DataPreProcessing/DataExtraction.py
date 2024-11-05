@@ -1,5 +1,6 @@
 import pandas as pd
 import os
+import yfinance as yf
 
 def extractSP500StocksInformationWikipedia(pathsConfig:dict=None) -> pd.DataFrame:
     """
@@ -40,3 +41,56 @@ def extractSP500StocksInformationWikipedia(pathsConfig:dict=None) -> pd.DataFram
 
     # Return the DataFrame
     return sp500Stocks
+
+
+def getStockMarketInformation(stockSymbol:str=None, config:dict=None, pathsConfig:dict=None) -> pd.DataFrame:
+    """
+    # Description
+        -> This function helps extract the Market Information of a given Stock.
+    ---------------------------------------------------------------------------
+    := param: stockSymbol - Stock that we aim to extract
+    := param: config - Dictionary with constants used to define the interval in which to extract the stock's information from.
+    := param: pathsConfig - Dictionary used to manage file paths. 
+    := return: Pandas DataFrame with the extracted market information.
+    """
+
+    # Check if the stock was passed on
+    if stockSymbol is None:
+        raise ValueError("Missing a Stock to extract the data from!")
+
+    # Verify if the config was given
+    if config is None:
+        raise ValueError("Missing a Configuration Dictionary!")
+
+    # Check if the pathsConfig was also passed on
+    if pathsConfig is None:
+        raise ValueError("Missing a Paths Configuration Dictionary!")
+    
+    # Define the file path in which the stock's market information resides in
+    stockFilePath = pathsConfig['Datasets']['Stocks-Market-Information'] + f"/{stockSymbol}.csv"
+
+    # Check if the information has already been fetched
+    if not os.paths.exists(stockFilePath):
+        try:
+            # Getting the Stock Market Information
+            stockInformation = yf.Ticker(stockSymbol)
+        except:
+            # The stock is not available through the yahoo finance API
+            print(f"[{stockSymbol}] Invalid Stock!")
+            return None
+        
+        # Fetching a dataset with the stock's history data
+        if config['max_period']:
+            stockHistory = stockInformation.history(period="max")
+        else:
+            stock_history = stockInformation.history(start=config['start_date'], end=config['end_date'])
+        
+        # Saving the History data into a csv file
+        stockHistory.to_csv(stockFilePath)
+
+    else:
+        # Read the previously computed data into a DataFrame
+        stockHistory = pd.read_csv(stockFilePath)
+
+    # Return the stock history if the 
+    return stockHistory
