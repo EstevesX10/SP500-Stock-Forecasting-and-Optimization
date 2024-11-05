@@ -42,7 +42,6 @@ def extractSP500StocksInformationWikipedia(pathsConfig:dict=None) -> pd.DataFram
     # Return the DataFrame
     return sp500Stocks
 
-
 def getStockMarketInformation(stockSymbol:str=None, config:dict=None, pathsConfig:dict=None) -> pd.DataFrame:
     """
     # Description
@@ -83,7 +82,7 @@ def getStockMarketInformation(stockSymbol:str=None, config:dict=None, pathsConfi
         if config['max_period']:
             stockHistory = stockInformation.history(period="max")
         else:
-            stock_history = stockInformation.history(start=config['start_date'], end=config['end_date'])
+            stockHistory = stockInformation.history(start=config['start_date'], end=config['end_date'])
         
         # Saving the History data into a csv file
         stockHistory.to_csv(stockFilePath)
