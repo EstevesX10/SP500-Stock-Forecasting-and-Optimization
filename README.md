@@ -60,7 +60,7 @@ If you're interested in inspecting and executing this project yourself, you'll n
     <img src="./SPX Stock Forecasting and Optimization/Assets/Warning.png" width="15%" height="15%" />
 </p>
 
-Since GitHub has **file size limits**, we've made them all available in a Cloud Storage provided by Google Drive which you can access [here](https://drive.google.com/drive/folders/1X9DI72QTb86kFYYeuGSrktsM3eE1_pVt?usp=drive_link).
+Since GitHub has **file size limits**, we've made them all available in a Cloud Storage provided by Google Drive which you can access [here](__INSERT_LINK__).
 
 ## Project Results
 
