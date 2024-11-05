@@ -48,7 +48,7 @@ def getStockMarketInformation(stockSymbol:str=None, config:dict=None, pathsConfi
     # Description
         -> This function helps extract the Market Information of a given Stock.
     ---------------------------------------------------------------------------
-    := param: stockSymbol - Stock that we aim to extract
+    := param: stockSymbol - Stock that we aim to extract.
     := param: config - Dictionary with constants used to define the interval in which to extract the stock's information from.
     := param: pathsConfig - Dictionary used to manage file paths. 
     := return: Pandas DataFrame with the extracted market information.
@@ -70,7 +70,7 @@ def getStockMarketInformation(stockSymbol:str=None, config:dict=None, pathsConfi
     stockFilePath = pathsConfig['Datasets']['Stocks-Market-Information'] + f"/{stockSymbol}.csv"
 
     # Check if the information has already been fetched
-    if not os.paths.exists(stockFilePath):
+    if not os.path.exists(stockFilePath):
         try:
             # Getting the Stock Market Information
             stockInformation = yf.Ticker(stockSymbol)
