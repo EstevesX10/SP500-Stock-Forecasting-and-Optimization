@@ -1,7 +1,3 @@
-# SPX-Stock-Forecasting-and-Optimization
-
-S&amp;P-500 Stock Forecasting [Labs AI &amp; DS Course Project]
-
 <div align="center">
 
 # Labs AI & DS | S&P-500 (SPX) Stock Forecasting and Optimization
