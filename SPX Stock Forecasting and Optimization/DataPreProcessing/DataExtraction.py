@@ -1,6 +1,7 @@
 import pandas as pd
 import os
 import yfinance as yf
+from datetime import (datetime)
 
 def extractSP500StocksInformationWikipedia(pathsConfig:dict=None) -> pd.DataFrame:
     """
@@ -28,9 +29,6 @@ def extractSP500StocksInformationWikipedia(pathsConfig:dict=None) -> pd.DataFram
         
         # Reset the indices
         sp500Stocks = sp500Stocks.reset_index().drop('index', axis=1)
-        
-        # Display the first few rows of the table
-        sp500Stocks.head()
 
         # Save the DataFrane
         sp500Stocks.to_csv(pathsConfig['Datasets']['SP500-Stocks-Wikipedia'], sep=',', index=False)
@@ -41,6 +39,77 @@ def extractSP500StocksInformationWikipedia(pathsConfig:dict=None) -> pd.DataFram
 
     # Return the DataFrame
     return sp500Stocks
+
+def strToDatetime(string_date:str) -> datetime:
+    """
+    # Description
+        -> Converts a string of type YYYY-MM-DD into a datetime object. 
+    -------------------------------------------------------------------
+    := param: string_date - String that we want to convert into a datetime type object [Eg: '2003-10-10'].
+    := return: Instance of Datetime based on the given date string.
+    """
+    # Fetching the year, month and day from the string and convert them into int
+    year, month, day = list(map(int, string_date.split('-')))
+
+    # Return a instance of datetime with the respective extracted attributes from the given string
+    return datetime(year=year, month=month, day=day)
+
+def getSP500StockMarketInformation(config:dict=None, pathsConfig:dict=None) -> pd.DataFrame:
+    """
+    # Description
+        -> This function helps extract the Market Information of the S&P-500 Stock.
+    -------------------------------------------------------------------------------
+    := param: config - Dictionary with constants used to define the interval in which to extract the stock's information from.
+    := param: pathsConfig - Dictionary used to manage file paths. 
+    := return: Pandas DataFrame with the extracted market information.
+    """
+
+    # Verify if the config was given
+    if config is None:
+        raise ValueError("Missing a Configuration Dictionary!")
+
+    # Check if the pathsConfig was also passed on
+    if pathsConfig is None:
+        raise ValueError("Missing a Paths Configuration Dictionary!")
+    
+    # Define the stock symbol for the S&P-500
+    stockSymbol = '^GSPC'
+
+    # Define the file path in which the stock's market information resides in
+    stockFilePath = pathsConfig['Datasets']['SP500-Market-Information']
+
+    # Check if the information has already been fetched
+    if not os.path.exists(stockFilePath):
+        try:
+            # Getting the Stock Market Information
+            stockInformation = yf.Ticker(stockSymbol)
+        except:
+            # The stock is not available through the yahoo finance API
+            print(f"[{stockSymbol}] Invalid Stock!")
+            return None
+        
+        # Fetching a dataset with the stock's history data
+        if config['max_period']:
+            stockHistory = stockInformation.history(period="max")
+        else:
+            stockHistory = stockInformation.history(start=config['start_date'], end=config['end_date'])
+
+        # Get the index back into the DataFrame
+        stockHistory = stockHistory.reset_index()
+
+        # Adapt the Date on the dataframe to simply include the date and not the time
+        stockHistory['Date'] = stockHistory['Date'].apply(lambda x: str(x).split(' ')[0])
+        stockHistory['Date'] = stockHistory['Date'].map(lambda dateString : strToDatetime(dateString))
+
+        # Saving the History data into a csv file
+        stockHistory.to_csv(stockFilePath, sep=',', index=False)
+
+    else:
+        # Read the previously computed data into a DataFrame
+        stockHistory = pd.read_csv(stockFilePath)
+
+    # Return the stock history
+    return stockHistory
 
 def getStockMarketInformation(stockSymbol:str=None, config:dict=None, pathsConfig:dict=None) -> pd.DataFrame:
     """
@@ -83,13 +152,20 @@ def getStockMarketInformation(stockSymbol:str=None, config:dict=None, pathsConfi
             stockHistory = stockInformation.history(period="max")
         else:
             stockHistory = stockInformation.history(start=config['start_date'], end=config['end_date'])
-        
+
+        # Get the index back into the DataFrame
+        stockHistory = stockHistory.reset_index()
+
+        # Adapt the Date on the dataframe to simply include the date and not the time
+        stockHistory['Date'] = stockHistory['Date'].apply(lambda x: str(x).split(' ')[0])
+        stockHistory['Date'] = stockHistory['Date'].map(lambda dateString : strToDatetime(dateString))
+
         # Saving the History data into a csv file
-        stockHistory.to_csv(stockFilePath)
+        stockHistory.to_csv(stockFilePath, sep=',', index=False)
 
     else:
         # Read the previously computed data into a DataFrame
         stockHistory = pd.read_csv(stockFilePath)
 
-    # Return the stock history if the 
+    # Return the stock history
     return stockHistory
