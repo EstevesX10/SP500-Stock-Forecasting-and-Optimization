@@ -10,6 +10,8 @@ def loadConfig() -> dict:
             'max_period':False,         # Flag to determine whether or not to consider all the historical data, i.e, all the information available 
             'start_date':'2010-01-01',  # Start date of the data to be considered
             'end_date':'2023-12-31',    # End date of the data to be considered
+            'window':20,                # Window size that determines the day-interval in which to evaluate the trend of a stock (Essencially the size of the segmentation)
+            'volatility_window':60,     # Window of days in which to consider to assess the volatility of a given stock within a market index fund.
             'save_plot':False}          # Flag that decides whether or not to save the Final graph of the Notebook
 
 
