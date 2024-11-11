@@ -7,7 +7,7 @@
 </div>
 
 <p align="center" width="100%">
-    <img src="./SPX Stock Forecasting and Optimization/Assets/StockTrading.png" width="40%" height="40%" />
+    <img src="./SP500 Stock Forecasting and Optimization/Assets/StockTrading.png" width="40%" height="40%" />
 </p>
 
 <div align="center">
@@ -57,7 +57,7 @@ Therefore, for more informations regarding the **Virtual Environment** used in A
 If you're interested in inspecting and executing this project yourself, you'll need access to all the `datasets` we've created.
 
 <p align="center" width="100%">
-    <img src="./SPX Stock Forecasting and Optimization/Assets/Warning.png" width="15%" height="15%" />
+    <img src="./SP500 Stock Forecasting and Optimization/Assets/Warning.png" width="15%" height="15%" />
 </p>
 
 Since GitHub has **file size limits**, we've made them all available in a Cloud Storage provided by Google Drive which you can access [here](__INSERT_LINK__).
