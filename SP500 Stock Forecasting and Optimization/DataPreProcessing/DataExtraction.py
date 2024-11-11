@@ -1,7 +1,7 @@
 import pandas as pd
 import os
 import yfinance as yf
-from datetime import (datetime)
+from datetime import datetime as dt
 
 def extractSP500StocksInformationWikipedia(pathsConfig:dict=None) -> pd.DataFrame:
     """
@@ -40,7 +40,7 @@ def extractSP500StocksInformationWikipedia(pathsConfig:dict=None) -> pd.DataFram
     # Return the DataFrame
     return sp500Stocks
 
-def strToDatetime(string_date:str) -> datetime:
+def strToDatetime(string_date:str) -> dt:
     """
     # Description
         -> Converts a string of type YYYY-MM-DD into a datetime object. 
@@ -52,7 +52,7 @@ def strToDatetime(string_date:str) -> datetime:
     year, month, day = list(map(int, string_date.split('-')))
 
     # Return a instance of datetime with the respective extracted attributes from the given string
-    return datetime(year=year, month=month, day=day)
+    return dt(year=year, month=month, day=day)
 
 def getSP500StockMarketInformation(config:dict=None, pathsConfig:dict=None) -> pd.DataFrame:
     """
@@ -98,14 +98,16 @@ def getSP500StockMarketInformation(config:dict=None, pathsConfig:dict=None) -> p
         stockHistory = stockHistory.reset_index()
 
         # Adapt the Date on the dataframe to simply include the date and not the time
-        stockHistory['Date'] = stockHistory['Date'].apply(lambda x: str(x).split(' ')[0])
-        stockHistory['Date'] = stockHistory['Date'].map(lambda dateString : strToDatetime(dateString))
+        stockHistory['Date'] = pd.to_datetime(stockHistory['Date']).dt.date
 
         # Create a Daily Return with help of the pct_change
         stockHistory['Daily Return'] = stockHistory['Close'].pct_change()
 
         # Replace the index with the 'Date'
         stockHistory.index = stockHistory['Date']
+
+        # Configure dataframe to be placed only beyond 2010
+        stockHistory = stockHistory[stockHistory['Date'] > dt(2010, 1, 1).date()]
 
         # Saving the History data into a csv file
         stockHistory.to_csv(stockFilePath, sep=',', index=False)
@@ -163,8 +165,7 @@ def getStockMarketInformation(stockSymbol:str=None, config:dict=None, pathsConfi
         stockHistory = stockHistory.reset_index()
 
         # Adapt the Date on the dataframe to simply include the date and not the time
-        stockHistory['Date'] = stockHistory['Date'].apply(lambda x: str(x).split(' ')[0])
-        stockHistory['Date'] = stockHistory['Date'].map(lambda dateString : strToDatetime(dateString))
+        stockHistory['Date'] = pd.to_datetime(stockHistory['Date']).dt.date
 
         # Calculate the Simple Moving Average - Calculates the N-Day SMA for closing prices, providing 
         # a view of the stock's trend
@@ -185,8 +186,12 @@ def getStockMarketInformation(stockSymbol:str=None, config:dict=None, pathsConfi
         stockHistory['Cumulative Return'] = (1 + stockHistory['Daily Return']).cumprod()
 
         # Get the S&P-500 Market Index Fluctuation over the last year to assess volatility
-        spy = yf.Ticker("SPY").history(period="1y")
-        
+        spy = yf.Ticker("SPY").history(start=stockHistory['Date'].min(), end=stockHistory['Date'].max())
+        spy = spy.reset_index()
+
+        # Format Date
+        spy['Date'] = pd.to_datetime(spy['Date']).dt.date
+
         # Compute its Daily Return
         spy['Daily Return'] = spy['Close'].pct_change()
 
@@ -197,6 +202,9 @@ def getStockMarketInformation(stockSymbol:str=None, config:dict=None, pathsConfi
 
         # Replace the index with the 'Date'
         stockHistory.index = stockHistory['Date']
+
+        # Configure dataframe to be placed only beyond 2010
+        stockHistory = stockHistory[stockHistory['Date'] > dt(2010, 1, 1).date()]
 
         # Saving the History data into a csv file
         stockHistory.to_csv(stockFilePath, sep=',', index=False)
