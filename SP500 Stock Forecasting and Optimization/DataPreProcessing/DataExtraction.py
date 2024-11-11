@@ -101,6 +101,9 @@ def getSP500StockMarketInformation(config:dict=None, pathsConfig:dict=None) -> p
         stockHistory['Date'] = stockHistory['Date'].apply(lambda x: str(x).split(' ')[0])
         stockHistory['Date'] = stockHistory['Date'].map(lambda dateString : strToDatetime(dateString))
 
+        # Create a Daily Return with help of the pct_change
+        stockHistory['Daily Return'] = stockHistory['Close'].pct_change()
+
         # Replace the index with the 'Date'
         stockHistory.index = stockHistory['Date']
 
@@ -162,6 +165,9 @@ def getStockMarketInformation(stockSymbol:str=None, config:dict=None, pathsConfi
         # Adapt the Date on the dataframe to simply include the date and not the time
         stockHistory['Date'] = stockHistory['Date'].apply(lambda x: str(x).split(' ')[0])
         stockHistory['Date'] = stockHistory['Date'].map(lambda dateString : strToDatetime(dateString))
+
+        # Create a Daily Return with help of the pct_change
+        stockHistory['Daily Return'] = stockHistory['Close'].pct_change()
 
         # Replace the index with the 'Date'
         stockHistory.index = stockHistory['Date']
