@@ -166,8 +166,34 @@ def getStockMarketInformation(stockSymbol:str=None, config:dict=None, pathsConfi
         stockHistory['Date'] = stockHistory['Date'].apply(lambda x: str(x).split(' ')[0])
         stockHistory['Date'] = stockHistory['Date'].map(lambda dateString : strToDatetime(dateString))
 
+        # Calculate the Simple Moving Average - Calculates the N-Day SMA for closing prices, providing 
+        # a view of the stock's trend
+        stockHistory['SMA'] = stockHistory['Close'].rolling(window=config['window']).mean()
+
+        # Calculate the Exponential Moving Average
+        # It gives more weight to recent prices, offering a closer look at the current trend
+        stockHistory['EMA'] = stockHistory['Close'].ewm(span=config['window'], adjust=False).mean()
+
+        # Calculate the Bollinger Bands used to assess volatility and potential overbought/oversold stocks
+        stockHistory['UpperBB'] = stockHistory['SMA'] + (stockHistory['Close'].rolling(window=config['window']).std() * 2)
+        stockHistory['LowerBB'] = stockHistory['SMA'] - (stockHistory['Close'].rolling(window=config['window']).std() * 2)
+
         # Create a Daily Return with help of the pct_change
         stockHistory['Daily Return'] = stockHistory['Close'].pct_change()
+
+        # Calculate the cumulative return
+        stockHistory['Cumulative Return'] = (1 + stockHistory['Daily Return']).cumprod()
+
+        # Get the S&P-500 Market Index Fluctuation over the last year to assess volatility
+        spy = yf.Ticker("SPY").history(period="1y")
+        
+        # Compute its Daily Return
+        spy['Daily Return'] = spy['Close'].pct_change()
+
+        # Compute the Beta Metric
+        # It measures the stock's volatility relative to the market - In this case S&P-500 over the last 2 months
+        stockHistory['Covariance'] = stockHistory['Daily Return'].rolling(window=config['volatility_window']).cov(spy['Daily Return'])
+        stockHistory['Beta'] = stockHistory['Covariance'] / spy['Daily Return'].rolling(window=config['volatility_window']).var()
 
         # Replace the index with the 'Date'
         stockHistory.index = stockHistory['Date']
