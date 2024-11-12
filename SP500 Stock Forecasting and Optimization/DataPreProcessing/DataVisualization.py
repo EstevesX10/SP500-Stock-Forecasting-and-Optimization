@@ -22,12 +22,18 @@ def plotStockClosingPrice(stockMarketHistory:pd.DataFrame=None, title:str=None) 
     # Define a default value for the title if none was given
     title = 'Closing Prices' if title is None else title
 
+    # Defining the index as the Date Column
+    stockMarketHistory.index = stockMarketHistory['Date']
+
+    # Ensure the index is in DateTime format
+    stockMarketHistory.index = pd.to_datetime(stockMarketHistory.index)
+
     # Create a figure for the plot
     plt.figure(figsize=(8, 5))
     plt.subplots_adjust(top=1.25, bottom=1.2)
 
     # Plot the Closing Prices according to the index values [In theory, the DataFrames contain the dates as their index values]
-    stockMarketHistory['Close'].plot()
+    plt.plot(stockMarketHistory.index, stockMarketHistory['Close'], label='Closing Price')
 
     # Populate the title, X and Y axis alongside a legend
     plt.title(title)
