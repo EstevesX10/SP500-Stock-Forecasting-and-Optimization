@@ -159,8 +159,28 @@ def getStockMarketInformation(stockSymbol:str=None, config:dict=None, pathsConfi
         if config['max_period']:
             stockHistory = stockInformation.history(period="max")
         else:
-            stockHistory = stockInformation.history(start=config['start_date'], end=config['end_date'])
+            # Fetch the whole data
+            data = stockInformation.history(period="max")
+            
+            # Old Stock and therefore it has been delisted
+            if data.shape[0] == 0:
+                print(f"[{stockSymbol}] Delisted Stock")
+                return None
+            
+            # Get the earliest available date
+            startDate = max(data.index.min().strftime('%Y-%m-%d'), config['start_date'])
 
+            print("Start Date", startDate)
+            print("End Date", config['end_date'])
+
+            # Recent DataFrames that go into 2024
+            if (startDate > config['end_date']):
+                print("{stockSymbol} Too Recent to Use!")
+                return None
+
+            # Grab the data for the computed interval
+            stockHistory = stockInformation.history(start=startDate, end=config['end_date'])
+            
         # Get the index back into the DataFrame
         stockHistory = stockHistory.reset_index()
 
@@ -207,7 +227,7 @@ def getStockMarketInformation(stockSymbol:str=None, config:dict=None, pathsConfi
         stockHistory = stockHistory[stockHistory['Date'] > dt(2010, 1, 1).date()]
 
         # Saving the History data into a csv file
-        stockHistory.to_csv(stockFilePath, sep=',', index=False)
+        # stockHistory.to_csv(stockFilePath, sep=',', index=False)
 
     else:
         # Read the previously computed data into a DataFrame
