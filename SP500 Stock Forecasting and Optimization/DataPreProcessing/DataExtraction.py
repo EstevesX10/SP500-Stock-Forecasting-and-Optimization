@@ -175,7 +175,7 @@ def getStockMarketInformation(stockSymbol:str=None, config:dict=None, pathsConfi
 
             # Recent DataFrames that go into 2024
             if (startDate > config['end_date']):
-                print("{stockSymbol} Too Recent to Use!")
+                print(f"[{stockSymbol}] Added too recently to be used!")
                 return None
 
             # Grab the data for the computed interval
@@ -223,11 +223,16 @@ def getStockMarketInformation(stockSymbol:str=None, config:dict=None, pathsConfi
         # Replace the index with the 'Date'
         stockHistory.index = stockHistory['Date']
 
-        # Configure dataframe to be placed only beyond 2010
-        stockHistory = stockHistory[stockHistory['Date'] > dt(2010, 1, 1).date()]
+        # Configure dataframe to be placed only beyond 2010 and before February 2024
+        stockHistory = stockHistory[stockHistory['Date'] >= dt(2010, 1, 1).date()]
+        stockHistory = stockHistory[stockHistory['Date'] < dt(2024, 2, 1).date()]
+
+        # Check for mismatches based on the volatility window, since some metrics are computed based on the previous N Entries
+        if config['start_date'] < startDate:
+            stockHistory = stockHistory.iloc[config['volatility_window']:]
 
         # Saving the History data into a csv file
-        # stockHistory.to_csv(stockFilePath, sep=',', index=False)
+        stockHistory.to_csv(stockFilePath, sep=',', index=False)
 
     else:
         # Read the previously computed data into a DataFrame
