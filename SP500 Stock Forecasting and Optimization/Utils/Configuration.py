@@ -30,3 +30,22 @@ def loadPathsConfig() -> dict:
             'Stocks-Market-Information':'./Datasets/Stocks/'
         }
     }
+
+def loadInitialSetup() -> dict:
+    """
+    # Description
+        -> This function loads all the initial parameters 7
+        to consider when performing portfolio optimization.
+    -------------------------------------------------------
+    := return: Dictionary with the initial configuration for the optimization phase of the project.
+    """
+    return {
+        'initialMoney':1000,
+        'buyFee':1,
+        'sellFee':1,
+        'limitStocksPerDay':100,
+        'minimizeRisk':True,
+        'maximizeRisk':False,
+        'minimizeReturn':False,
+        'maximizeReturn':True
+    }
