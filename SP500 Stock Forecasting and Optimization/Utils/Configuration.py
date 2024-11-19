@@ -27,7 +27,8 @@ def loadPathsConfig() -> dict:
         'Datasets': {
             'SP500-Stocks-Wikipedia':'./Datasets/SP500-Stocks-Wikipedia.csv',
             'SP500-Market-Information':'./Datasets/SP500-Market-Information.csv',
-            'Stocks-Market-Information':'./Datasets/Stocks/'
+            'Stocks-Market-Information':'./Datasets/Stocks/Raw',
+            'Windowed-Stocks-Market-Information':'./Datasets/Stocks/Windowed'
         }
     }
 
