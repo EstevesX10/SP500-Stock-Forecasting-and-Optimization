@@ -240,3 +240,62 @@ def getStockMarketInformation(stockSymbol:str=None, config:dict=None, pathsConfi
 
     # Return the stock history
     return stockHistory
+
+def createWindowedStockDataFrame(stock_df:pd.DataFrame, window_size:int, feature:str) -> pd.DataFrame:
+    """
+    # Description
+        -> This function helps create a windowed DataFrame with 0 to N time stamps 
+        for train and 1 test stamp as the target value.
+    ------------------------------------------------------------------------------
+    := param: stock_df - Pandas DataFrame to process into a windowed DataFrame.
+    := param: window_size - Size of the window used for tranning.
+    := param: feature - Feature to perform temporal sampling from.
+    := return: Windowed DataFrame.
+    """
+
+    # Make a check for the window size
+    if (window_size + 2 > stock_df.shape[0]):
+        raise ValueError("Invalid Window Size Given")
+
+    # The window size must be equal or larger than 3 - To include train, validation and test
+    if (window_size < 3):
+        raise ValueError("Invalid Window Size [The size must be 3 or larger!]")
+    
+    # Check if the selected feature is inside the columns of the given DataFrame
+    if (feature not in stock_df.columns):
+        raise ValueError("Invalid Feature Selected")
+
+    # Create a Variable to store all the data regarding the time segments
+    data = []
+
+    # Iterate through the DataFrame
+    for index, row in stock_df.iloc[:stock_df.shape[0] - window_size - 1, :].iterrows():
+        currentTimeSequence = {}
+        timeStamp = 0
+        
+        # Iterate through the DataFrame within the current window 
+        for _, timeRow in stock_df.iloc[index : index + window_size, :].iterrows():
+            # Validation Day
+            if timeStamp == window_size - 2:
+                currentDay = 'Validation'
+            # Test Day
+            elif timeStamp == window_size - 1:
+                currentDay = 'Test'
+            # Train Days
+            else:
+                currentDay = f'Train_{timeStamp}'
+            
+            # Update the current time sequence
+            currentTimeSequence.update({currentDay:timeRow[feature]})
+            timeStamp += 1
+        
+        # Add the target date
+        currentTimeSequence.update({'Target_Date':row['Date']})
+
+        # Append the new time sequence
+        data.append(currentTimeSequence)
+
+    # Create a DataFrame with the final DataFrame
+    df = pd.DataFrame(data=data)
+
+    return df
