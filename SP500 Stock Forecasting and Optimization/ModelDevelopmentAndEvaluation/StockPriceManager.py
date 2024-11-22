@@ -25,7 +25,6 @@ class stockPriceManager:
         self.stockSymbol = stockSymbol
         self.feature = feature
         self.windowSize = windowSize
-        self.predictionDate = predictionDate
         self.pathsConfig = pathsConfig
 
         # Define the file path in which the stock's market information resides in
@@ -33,6 +32,12 @@ class stockPriceManager:
         
         # Load the stock market history DataFrame
         self.df = self.loadStockMarketHistory()
+
+        # Compute the prediction date [Takes into consideration getting an invalid date - It will get the closest date in the future]
+        self.predictionDate = self.df['Date'].iloc[self.df.index[self.df['Date'] >= predictionDate]].tolist()[0]
+
+        # Compute the date to use for Validation
+        self.validationDate = self.df['Date'].iloc[self.df.index[self.df['Date'] >= predictionDate] - 1].tolist()[0]
 
         # Make a check for the window size
         if (self.windowSize + 2 > self.df.shape[0]):
@@ -77,9 +82,10 @@ class stockPriceManager:
             # Create a Variable to store all the data regarding the time segments
             data = []
 
-            # Select the data used for train and test
-            trainCondition = self.df['Date'] < self.predictionDate
-            testCondition = self.df['Date'] >= self.predictionDate
+            # Select the data used for train, validation and test
+            trainCondition = self.df['Date'] < self.validationDate
+            validationCondition = self.df['Date'] == self.validationDate
+            testCondition = self.df['Date'] == self.predictionDate
 
             # Create a scaler to normalize the data
             scaler = MinMaxScaler(feature_range=(0, 1))
@@ -87,6 +93,10 @@ class stockPriceManager:
             # Normalize the Closing Price for the training set
             trainClosingPrices = self.df.loc[trainCondition, 'Close'].values.reshape(-1, 1)
             self.df.loc[trainCondition, 'Close'] = scaler.fit_transform(trainClosingPrices)
+
+            # Normalize the Closing Price for the validation set
+            validationClosingPrices = self.df.loc[validationCondition, 'Close'].values.reshape(-1, 1)
+            self.df.loc[validationCondition, 'Close'] = scaler.transform(validationClosingPrices)
 
             # Normalize the Closing Price for the test set
             testClosingPrices = self.df.loc[testCondition, 'Close'].values.reshape(-1, 1)
@@ -99,11 +109,8 @@ class stockPriceManager:
                 
                 # Iterate through the DataFrame within the current window 
                 for _, timeRow in self.df.iloc[index : index + self.windowSize, :].iterrows():
-                    # Validation Day
-                    if timeStamp == self.windowSize - 2:
-                        currentDay = 'Validation'
                     # Test Day
-                    elif timeStamp == self.windowSize - 1:
+                    if timeStamp == self.windowSize - 1:
                         currentDay = 'Target'
                     # Train Days
                     else:
@@ -156,19 +163,23 @@ class stockPriceManager:
         # predictionDate = self.strToDatetime(predictionDate)
 
         # Define the conditions to belong on either one of the sets
-        trainCondition = self.df['Target_Date'] < self.predictionDate
-        testCondition = self.df['Target_Date'] >= self.predictionDate
+        trainCondition = self.df['Target_Date'] < self.validationDate
+        validationCondition = self.df['Target_Date'] == self.validationDate
+        testCondition = self.df['Target_Date'] == self.predictionDate
 
-        # Select the data for the train and test sets
+        # Select the data for the train, validation and test sets
         train_df = self.df[trainCondition]
+        validation_df = self.df[validationCondition]
         test_df = self.df[testCondition]
 
-        # Split the train and test sets into features and target
+        # Split the train, validation and test sets into features and target
         X_train = train_df[train_df.columns[:-2]]
         y_train = train_df[train_df.columns[-2]]
+        
+        X_validation = validation_df[validation_df.columns[:-2]]
+        y_validation = validation_df[validation_df.columns[-2]]
         
         X_test = test_df[test_df.columns[:-2]].to_numpy()
         y_test = test_df[test_df.columns[-2]].to_numpy()
 
-        return X_train, y_train, X_test, y_test
-        
+        return X_train, y_train, X_validation, y_validation, X_test, y_test
