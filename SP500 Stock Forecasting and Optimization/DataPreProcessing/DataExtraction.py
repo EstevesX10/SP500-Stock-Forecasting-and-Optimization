@@ -1,3 +1,4 @@
+import numpy as np
 import pandas as pd
 import os
 import yfinance as yf
@@ -39,20 +40,6 @@ def extractSP500StocksInformationWikipedia(pathsConfig:dict=None) -> pd.DataFram
 
     # Return the DataFrame
     return sp500Stocks
-
-def strToDatetime(string_date:str) -> dt:
-    """
-    # Description
-        -> Converts a string of type YYYY-MM-DD into a datetime object. 
-    -------------------------------------------------------------------
-    := param: string_date - String that we want to convert into a datetime type object [Eg: '2003-10-10'].
-    := return: Instance of Datetime based on the given date string.
-    """
-    # Fetching the year, month and day from the string and convert them into int
-    year, month, day = list(map(int, string_date.split('-')))
-
-    # Return a instance of datetime with the respective extracted attributes from the given string
-    return dt(year=year, month=month, day=day)
 
 def getSP500StockMarketInformation(config:dict=None, pathsConfig:dict=None) -> pd.DataFrame:
     """
@@ -187,8 +174,8 @@ def getStockMarketInformation(stockSymbol:str=None, config:dict=None, pathsConfi
         # Adapt the Date on the dataframe to simply include the date and not the time
         stockHistory['Date'] = pd.to_datetime(stockHistory['Date']).dt.date
 
-        # Calculate the Simple Moving Average - Calculates the N-Day SMA for closing prices, providing 
-        # a view of the stock's trend
+        # Calculate the Simple Moving Average - Calculates the N-Day SMA for closing prices, 
+        # providing a view of the stock's trend
         stockHistory['SMA'] = stockHistory['Close'].rolling(window=config['window']).mean()
 
         # Calculate the Exponential Moving Average
@@ -200,25 +187,16 @@ def getStockMarketInformation(stockSymbol:str=None, config:dict=None, pathsConfi
         stockHistory['LowerBB'] = stockHistory['SMA'] - (stockHistory['Close'].rolling(window=config['window']).std() * 2)
 
         # Create a Daily Return with help of the pct_change
-        stockHistory['Daily Return'] = stockHistory['Close'].pct_change()
+        stockHistory['Daily_Return'] = stockHistory['Close'].pct_change()
 
         # Calculate the cumulative return
-        stockHistory['Cumulative Return'] = (1 + stockHistory['Daily Return']).cumprod()
+        stockHistory['Cumulative_Return'] = (1 + stockHistory['Daily_Return']).cumprod()
 
-        # Get the S&P-500 Market Index Fluctuation over the last year to assess volatility
-        spy = yf.Ticker("SPY").history(start=stockHistory['Date'].min(), end=stockHistory['Date'].max())
-        spy = spy.reset_index()
+        # Define the Window Return
+        stockHistory['Window_Return'] = stockHistory['Close'].pct_change(periods=config['window'])
 
-        # Format Date
-        spy['Date'] = pd.to_datetime(spy['Date']).dt.date
-
-        # Compute its Daily Return
-        spy['Daily Return'] = spy['Close'].pct_change()
-
-        # Compute the Beta Metric
-        # It measures the stock's volatility relative to the market - In this case S&P-500 over the last 2 months
-        stockHistory['Covariance'] = stockHistory['Daily Return'].rolling(window=config['volatility_window']).cov(spy['Daily Return'])
-        stockHistory['Beta'] = stockHistory['Covariance'] / spy['Daily Return'].rolling(window=config['volatility_window']).var()
+        # Compute the Volatility based on the window return
+        stockHistory['Volatility'] = stockHistory['Window_Return'].rolling(window=config['window']).std()
 
         # Replace the index with the 'Date'
         stockHistory.index = stockHistory['Date']
@@ -229,7 +207,7 @@ def getStockMarketInformation(stockSymbol:str=None, config:dict=None, pathsConfi
 
         # Check for mismatches based on the volatility window, since some metrics are computed based on the previous N Entries
         if config['start_date'] < startDate:
-            stockHistory = stockHistory.iloc[config['volatility_window']:]
+            stockHistory = stockHistory.iloc[config['window']:]
 
         # Saving the History data into a csv file
         stockHistory.to_csv(stockFilePath, sep=',', index=False)
@@ -240,62 +218,3 @@ def getStockMarketInformation(stockSymbol:str=None, config:dict=None, pathsConfi
 
     # Return the stock history
     return stockHistory
-
-def createWindowedStockDataFrame(stock_df:pd.DataFrame, window_size:int, feature:str) -> pd.DataFrame:
-    """
-    # Description
-        -> This function helps create a windowed DataFrame with 0 to N time stamps 
-        for train and 1 test stamp as the target value.
-    ------------------------------------------------------------------------------
-    := param: stock_df - Pandas DataFrame to process into a windowed DataFrame.
-    := param: window_size - Size of the window used for tranning.
-    := param: feature - Feature to perform temporal sampling from.
-    := return: Windowed DataFrame.
-    """
-
-    # Make a check for the window size
-    if (window_size + 2 > stock_df.shape[0]):
-        raise ValueError("Invalid Window Size Given")
-
-    # The window size must be equal or larger than 3 - To include train, validation and test
-    if (window_size < 3):
-        raise ValueError("Invalid Window Size [The size must be 3 or larger!]")
-    
-    # Check if the selected feature is inside the columns of the given DataFrame
-    if (feature not in stock_df.columns):
-        raise ValueError("Invalid Feature Selected")
-
-    # Create a Variable to store all the data regarding the time segments
-    data = []
-
-    # Iterate through the DataFrame
-    for index, row in stock_df.iloc[:stock_df.shape[0] - window_size - 1, :].iterrows():
-        currentTimeSequence = {}
-        timeStamp = 0
-        
-        # Iterate through the DataFrame within the current window 
-        for _, timeRow in stock_df.iloc[index : index + window_size, :].iterrows():
-            # Validation Day
-            if timeStamp == window_size - 2:
-                currentDay = 'Validation'
-            # Test Day
-            elif timeStamp == window_size - 1:
-                currentDay = 'Test'
-            # Train Days
-            else:
-                currentDay = f'Train_{timeStamp}'
-            
-            # Update the current time sequence
-            currentTimeSequence.update({currentDay:timeRow[feature]})
-            timeStamp += 1
-        
-        # Add the target date
-        currentTimeSequence.update({'Target_Date':row['Date']})
-
-        # Append the new time sequence
-        data.append(currentTimeSequence)
-
-    # Create a DataFrame with the final DataFrame
-    df = pd.DataFrame(data=data)
-
-    return df
