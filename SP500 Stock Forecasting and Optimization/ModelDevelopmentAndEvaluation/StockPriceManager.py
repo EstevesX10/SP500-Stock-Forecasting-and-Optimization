@@ -160,24 +160,51 @@ class stockPriceManager:
         -------------------------------------------------------------------------
         := retuns: Train and Test Sets to use for Training.
         """
-        # predictionDate = self.strToDatetime(predictionDate)
 
-        # Define the conditions to belong on either one of the sets
+        # # Define the conditions to belong on either one of the sets
+        # trainCondition = self.df['Target_Date'] < self.validationDate
+        # validationCondition = self.df['Target_Date'] == self.validationDate
+        # testCondition = self.df['Target_Date'] == self.predictionDate
+
+        # # Select the data for the train, validation and test sets
+        # train_df = self.df[trainCondition]
+        # validation_df = self.df[validationCondition]
+        # test_df = self.df[testCondition]
+
+        # # Split the train, validation and test sets into features and target
+        # X_train = train_df[train_df.columns[:-2]]
+        # y_train = train_df[train_df.columns[-2]]
+        
+        # X_validation = validation_df[validation_df.columns[:-2]]
+        # y_validation = validation_df[validation_df.columns[-2]]
+        
+        # X_test = test_df[test_df.columns[:-2]].to_numpy()
+        # y_test = test_df[test_df.columns[-2]].to_numpy()
+
+        # return X_train, y_train, X_validation, y_validation, X_test, y_test
+
+        # Define the conditions to belong on either one of the sets (Train or Test)
         trainCondition = self.df['Target_Date'] < self.validationDate
-        validationCondition = self.df['Target_Date'] == self.validationDate
         testCondition = self.df['Target_Date'] == self.predictionDate
 
+        # Get the trainSize and define a point in which to separate the train and validation sets
+        trainSize = self.df[trainCondition].shape[0]
+        trainValMargin = int(0.8 * trainSize) 
+
+        # print(trainSize, trainValMargin)
+        # print(f"Train 0 - {trainValMargin} || Validation {trainValMargin + 1} - {trainSize}")
+
         # Select the data for the train, validation and test sets
-        train_df = self.df[trainCondition]
-        validation_df = self.df[validationCondition]
+        train_df = self.df[trainCondition].iloc[:trainValMargin]
+        validation_df = self.df[trainCondition].iloc[trainValMargin:]
         test_df = self.df[testCondition]
 
         # Split the train, validation and test sets into features and target
-        X_train = train_df[train_df.columns[:-2]]
-        y_train = train_df[train_df.columns[-2]]
+        X_train = train_df[train_df.columns[:-2]].to_numpy()
+        y_train = train_df[train_df.columns[-2]].to_numpy()
         
-        X_validation = validation_df[validation_df.columns[:-2]]
-        y_validation = validation_df[validation_df.columns[-2]]
+        X_validation = validation_df[validation_df.columns[:-2]].to_numpy()
+        y_validation = validation_df[validation_df.columns[-2]].to_numpy()
         
         X_test = test_df[test_df.columns[:-2]].to_numpy()
         y_test = test_df[test_df.columns[-2]].to_numpy()
