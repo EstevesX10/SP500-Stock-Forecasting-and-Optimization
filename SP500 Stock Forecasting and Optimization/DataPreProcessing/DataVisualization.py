@@ -47,6 +47,92 @@ def plotStockClosingPrice(stockMarketHistory:pd.DataFrame=None, title:str=None) 
     plt.tight_layout()
     plt.show()
 
+def plotStockStats(stockMarketHistory:pd.DataFrame=None, title:str=None) -> None:
+    """
+    # Description
+        -> This function helps plot important features related to a given stock.
+    ----------------------------------------------------------------------------
+    := param: stockMarketHistory - Pandas DataFrame with the stock's market information.
+    := param: title - Title for the final graph.
+    := return: None, since we are only plotting a graph. 
+    """
+
+    # Check if a market history was given
+    if stockMarketHistory is None:
+        raise ValueError("Missing a DataFrame with the Stock's Market History!")
+
+    # Define a default value for the title if none was given
+    title = 'Statistics' if title is None else title
+
+    # Create a copy of the original DataFrame
+    df = stockMarketHistory.copy()
+
+    # Defining the index as the Date Column
+    df.index = df['Date']
+
+    # Ensure the index is in DateTime format
+    df.index = pd.to_datetime(df.index)
+
+    # Create a figure with 1 row and 3 columns
+    fig, axes = plt.subplots(2, 3, figsize=(15, 5))
+
+    # Plot the Closing Prices according to the index values [In theory, the DataFrames contain the dates as their index values]
+    axes[0, 0].set_title('Closing Prices')
+    axes[0, 0].plot(df.index, df['Close'], label='Closing Price', color="blue", alpha=0.6)
+    axes[0, 0].set_xlabel('Date')
+    axes[0, 0].set_ylabel('Price (USD)')
+    axes[0, 0].legend()
+    axes[0, 0].grid(True)
+
+    # Plot the Sales Volume
+    axes[0, 1].set_title('Sales Volume')
+    axes[0, 1].plot(df.index, df['Volume'], label="Sales Volume", color="red", alpha=0.6)
+    axes[0, 1].set_xlabel('Date')
+    axes[0, 1].set_ylabel('Volume')
+    axes[0, 1].legend()
+    axes[0, 1].grid(True)
+
+    # Plot the bollinger bands
+    axes[0, 2].set_title("Bollinger Bands")
+    axes[0, 2].plot(df.index, df['Close'], label='Closing Price', color='blue', alpha=0.6)
+    axes[0, 2].plot(df.index, df['UpperBB'], label='Upper Bollinger Band', color='red', alpha=0.6)
+    axes[0, 2].plot(df.index, df['LowerBB'], label='Lower Bollinger Band', color='green', alpha=0.6)
+    axes[0, 2].fill_between(df.index, df['LowerBB'], df['UpperBB'], color='gray', alpha=0.2)
+    axes[0, 2].set_xlabel("Date")
+    axes[0, 2].set_ylabel("Price (USD)")
+    axes[0, 2].legend()
+    axes[0, 2].grid(True)
+
+    # Plot the Stock Daily Returns
+    axes[1, 0].set_title('Daily Returns')
+    axes[1, 0].plot(df.index, df['Daily_Return'], label='Daily Return', color='blue', alpha=0.6)
+    axes[1, 0].set_xlabel("Date")
+    axes[1, 0].set_ylabel("Price (USD)")
+    axes[1, 0].legend()
+    axes[1, 0].grid(True)
+
+    # Plot the Stock Window Returns
+    axes[1, 1].set_title('Window Returns')
+    axes[1, 1].plot(df.index, df['Window_Return'], label='Window Return', color='green', alpha=0.6)
+    axes[1, 1].set_xlabel("Date")
+    axes[1, 1].set_ylabel("Price (USD)")
+    axes[1, 1].legend()
+    axes[1, 1].grid(True)
+
+    # Plot the Stock Volatility
+    axes[1, 2].set_title('Volatility')
+    axes[1, 2].plot(df.index, df['Volatility'], label='Volatility', color='green', alpha=0.6)
+    axes[1, 2].set_xlabel("Date")
+    axes[1, 2].set_ylabel("Price (USD)")
+    axes[1, 2].legend()
+    axes[1, 2].grid(True)
+
+    # Add a global title
+    fig.suptitle(title, fontsize=16)
+
+    plt.tight_layout()
+    plt.show()
+
 def pastelizeColor(c:tuple, weight:float=None) -> np.ndarray:
     """
     # Description
