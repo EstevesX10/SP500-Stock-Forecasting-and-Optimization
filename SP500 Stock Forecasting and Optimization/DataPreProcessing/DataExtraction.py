@@ -1,6 +1,7 @@
 import numpy as np
 import pandas as pd
 import os
+from pathlib import (Path)
 import yfinance as yf
 from datetime import datetime as dt
 
@@ -134,6 +135,12 @@ def getStockMarketInformation(stockSymbol:str=None, config:dict=None, pathsConfi
     
     # Define the file path in which the stock's market information resides in
     stockFilePath = pathsConfig['Datasets']['Raw-Stocks-Market-Information'][f"{stockSymbol}"]
+
+    # Define the Folder in which to save the windowed DataFrame
+    stockFileFolder = Path("/".join(stockFilePath.split("/")[:-1]))
+    
+    # Check if the directory exists. If not create it
+    stockFileFolder.mkdir(parents=True, exist_ok=True)
 
     # Check if the information has already been fetched
     if not os.path.exists(stockFilePath):

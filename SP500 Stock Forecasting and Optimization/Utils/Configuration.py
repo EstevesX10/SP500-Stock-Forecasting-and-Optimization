@@ -1,4 +1,4 @@
-from typing import List
+from typing import (List)
 
 def loadConfig() -> dict:
     """
@@ -64,14 +64,17 @@ def createTrainedModelsPaths(stocks:List[str], predictionDates:List[str]) -> dic
 
         # Iterate through the Prediction Dates
         for predictionDate in predictionDates:
-            # Update the stockModelPaths
-            stockModelPaths.update({
-                predictionDate: f"./ExperimentalResults/TrainedModels/{stock}/{predictionDate}/model.keras"
-            })
-        
+            # Create a Dictionary to store each model path for a the current date
+            modelPaths = {}
+            for model in ["LGBM", "LSTM", "Prophet"]:
+                # Update the modelPaths
+                modelPaths.update({
+                    model: f"./ExperimentalResults/TrainedModels/{stock}/{predictionDate}/{model}.pkl"
+                })
+            # Update the Stock Model Paths
+            stockModelPaths.update({predictionDate:modelPaths})
         # Update the initial dictionary
         modelsPaths.update({stock:stockModelPaths})
-    
 
     # Return the Models Paths Dictionary
     return modelsPaths
@@ -108,9 +111,7 @@ def loadFinalPathsConfig(stocks:List[str], predictionDates:List[str]) -> dict:
             'Raw-Stocks-Market-Information': createStocksMarketInformationPaths(stocks=stocks, windowed=False),
             'Windowed-Stocks-Market-Information':createStocksMarketInformationPaths(stocks=stocks, windowed=True),
         },
-        'ExperimentalResults':{
-            'TrainedModels':createTrainedModelsPaths(stocks=stocks, predictionDates=predictionDates)
-        }
+        'ExperimentalResults':createTrainedModelsPaths(stocks=stocks, predictionDates=predictionDates)
     }
 
 def loadInitialSetup() -> dict:

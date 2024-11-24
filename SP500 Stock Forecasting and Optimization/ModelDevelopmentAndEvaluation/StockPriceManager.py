@@ -2,6 +2,7 @@ from typing import (Tuple)
 import numpy as np
 import pandas as pd
 import os
+from pathlib import (Path)
 from datetime import datetime as dt
 from sklearn.model_selection import (TimeSeriesSplit)
 from sklearn.preprocessing import (MinMaxScaler, StandardScaler)
@@ -77,6 +78,12 @@ class stockPriceManager:
 
         # Define a filepath for the windowed DataFrame
         windowedStockDataFile = self.pathsConfig['Datasets']['Windowed-Stocks-Market-Information'][f"{self.stockSymbol}"]
+
+        # Define the Folder in which to save the windowed DataFrame
+        windowedStockDataFolder = Path("/".join(windowedStockDataFile.split("/")[:-1]))
+        
+        # Check if the directory exists. If not create it
+        windowedStockDataFolder.mkdir(parents=True, exist_ok=True)
 
         if (not os.path.exists(windowedStockDataFile)):
             # Create a Variable to store all the data regarding the time segments
