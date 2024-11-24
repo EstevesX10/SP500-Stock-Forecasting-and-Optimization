@@ -1,3 +1,5 @@
+from typing import List
+
 def loadConfig() -> dict:
     """
     # Description
@@ -15,11 +17,70 @@ def loadConfig() -> dict:
             'save_plot':False}          # Flag that decides whether or not to save the Final graph of the Notebook
 
 
-def loadPathsConfig() -> dict:
+def createStocksMarketInformationPaths(stocks:List[str], windowed:bool) -> dict:
+    """
+    # Description
+        -> This function helps create paths to store all the data extracted with the YFinance API.
+    ----------------------------------------------------------------------------------------------
+    := param: stocks - List of strings representing the Symbols for each stock.
+    := param: windowed - Boolean that determines if the path corresponds to a windowed version of the extracted data or a raw version of it.
+    := return: Dictionary with the paths to store the market information for the given stocks.
+    """
+
+    # Create a initial dictionary to store all the information
+    stocksPaths = {}
+
+    # Windowed Version
+    if windowed:
+        # Iterate through the stocks symbols
+        for stock in stocks:
+            stocksPaths.update({stock:f"./Datasets/Stocks/Windowed/{stock}.csv"})
+    # Raw Version
+    else:
+        # Iterate through the stocks symbols
+        for stock in stocks:
+            stocksPaths.update({stock:f"./Datasets/Stocks/Raw/{stock}.csv"})
+
+    # Return the final dictionary
+    return stocksPaths
+
+def createTrainedModelsPaths(stocks:List[str], predictionDates:List[str]) -> dict:
+    """
+    # Description
+        -> This function creates a dictionary used to store experimental results, such as trained models.
+    -----------------------------------------------------------------------------------------------------
+    := param: stocks - List of strings representing the Symbols for each stock.
+    := param: predictionDates - List with the dates in which we are to perform inference - January 2024.
+    := return: Dictionary with the paths to store the experimental results.
+    """
+
+    # Create a initial dictionary
+    modelsPaths = {}
+
+    # Iterate through the stocks
+    for stock in stocks:
+        # Create a dictionary for the Stock's model paths
+        stockModelPaths = {}
+
+        # Iterate through the Prediction Dates
+        for predictionDate in predictionDates:
+            # Update the stockModelPaths
+            stockModelPaths.update({
+                predictionDate: f"./ExperimentalResults/TrainedModels/{stock}/{predictionDate}/model.keras"
+            })
+        
+        # Update the initial dictionary
+        modelsPaths.update({stock:stockModelPaths})
+    
+
+    # Return the Models Paths Dictionary
+    return modelsPaths
+
+def loadInitialPathsConfig() -> dict:
     """
     # Description
         -> This function aims to store all the path configuration related parameters used inside the project.
-    ----------------------------------------------------------------------------------------------------
+    ---------------------------------------------------------------------------------------------------------
     := return: Dictionary with some of the important file paths of the project.
     """
     return {
@@ -27,11 +88,28 @@ def loadPathsConfig() -> dict:
         'Datasets': {
             'SP500-Stocks-Wikipedia':'./Datasets/SP500-Stocks-Wikipedia.csv',
             'SP500-Market-Information':'./Datasets/SP500-Market-Information.csv',
-            'Stocks-Market-Information':'./Datasets/Stocks/Raw',
-            'Windowed-Stocks-Market-Information':'./Datasets/Stocks/Windowed'
+        },
+    }
+
+def loadFinalPathsConfig(stocks:List[str], predictionDates:List[str]) -> dict:
+    """
+    # Description
+        -> This function aims to store all the path configuration related parameters used inside the project.
+    ---------------------------------------------------------------------------------------------------------
+    := param: stocks - List of strings representing the Symbols for each stock.
+    := param: predictionDates - List with the dates in which we are to perform inference - January 2024.
+    := return: Dictionary with some of the important file paths of the project.
+    """
+    return {
+        'ExploratoryDataAnalysis':'./ExperimentalResults/',
+        'Datasets': {
+            'SP500-Stocks-Wikipedia':'./Datasets/SP500-Stocks-Wikipedia.csv',
+            'SP500-Market-Information':'./Datasets/SP500-Market-Information.csv',
+            'Raw-Stocks-Market-Information': createStocksMarketInformationPaths(stocks=stocks, windowed=False),
+            'Windowed-Stocks-Market-Information':createStocksMarketInformationPaths(stocks=stocks, windowed=True),
         },
         'ExperimentalResults':{
-            # ADD PATHS HERE
+            'TrainedModels':createTrainedModelsPaths(stocks=stocks, predictionDates=predictionDates)
         }
     }
 

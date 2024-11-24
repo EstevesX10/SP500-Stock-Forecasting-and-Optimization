@@ -28,7 +28,7 @@ class stockPriceManager:
         self.pathsConfig = pathsConfig
 
         # Define the file path in which the stock's market information resides in
-        self.stockFilePath = self.pathsConfig['Datasets']['Stocks-Market-Information'] + "/" + f"{stockSymbol}.csv"
+        self.stockFilePath = self.pathsConfig['Datasets']['Raw-Stocks-Market-Information'][f"{stockSymbol}"]
         
         # Load the stock market history DataFrame
         self.df = self.loadStockMarketHistory()
@@ -76,7 +76,7 @@ class stockPriceManager:
         """
 
         # Define a filepath for the windowed DataFrame
-        windowedStockDataFile = self.pathsConfig['Datasets']['Windowed-Stocks-Market-Information'] + "/" + f"{self.stockSymbol}.csv"
+        windowedStockDataFile = self.pathsConfig['Datasets']['Windowed-Stocks-Market-Information'][f"{self.stockSymbol}"]
 
         if (not os.path.exists(windowedStockDataFile)):
             # Create a Variable to store all the data regarding the time segments

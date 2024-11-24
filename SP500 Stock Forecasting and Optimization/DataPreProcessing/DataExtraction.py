@@ -96,6 +96,9 @@ def getSP500StockMarketInformation(config:dict=None, pathsConfig:dict=None) -> p
         # Configure dataframe to be placed only beyond 2010
         stockHistory = stockHistory[stockHistory['Date'] > dt(2010, 1, 1).date()]
 
+        # Get the index back into the DataFrame
+        stockHistory = stockHistory.reset_index(drop=True)
+
         # Saving the History data into a csv file
         stockHistory.to_csv(stockFilePath, sep=',', index=False)
 
@@ -130,7 +133,7 @@ def getStockMarketInformation(stockSymbol:str=None, config:dict=None, pathsConfi
         raise ValueError("Missing a Paths Configuration Dictionary!")
     
     # Define the file path in which the stock's market information resides in
-    stockFilePath = pathsConfig['Datasets']['Stocks-Market-Information'] + f"/{stockSymbol}.csv"
+    stockFilePath = pathsConfig['Datasets']['Raw-Stocks-Market-Information'][f"{stockSymbol}"]
 
     # Check if the information has already been fetched
     if not os.path.exists(stockFilePath):
@@ -157,8 +160,8 @@ def getStockMarketInformation(stockSymbol:str=None, config:dict=None, pathsConfi
             # Get the earliest available date
             startDate = max(data.index.min().strftime('%Y-%m-%d'), config['start_date'])
 
-            print("Start Date", startDate)
-            print("End Date", config['end_date'])
+            # print("Start Date", startDate)
+            # print("End Date", config['end_date'])
 
             # Recent DataFrames that go into 2024
             if (startDate > config['end_date']):
@@ -198,12 +201,12 @@ def getStockMarketInformation(stockSymbol:str=None, config:dict=None, pathsConfi
         # Compute the Volatility based on the window return
         stockHistory['Volatility'] = stockHistory['Window_Return'].rolling(window=config['window']).std()
 
-        # Replace the index with the 'Date'
-        stockHistory.index = stockHistory['Date']
-
         # Configure dataframe to be placed only beyond 2010 and before February 2024
         stockHistory = stockHistory[stockHistory['Date'] >= dt(2010, 1, 1).date()]
         stockHistory = stockHistory[stockHistory['Date'] < dt(2024, 2, 1).date()]
+
+        # Get the index back into the DataFrame
+        stockHistory = stockHistory.reset_index(drop=True)
 
         # Check for mismatches based on the volatility window, since some metrics are computed based on the previous N Entries
         if config['start_date'] < startDate:
