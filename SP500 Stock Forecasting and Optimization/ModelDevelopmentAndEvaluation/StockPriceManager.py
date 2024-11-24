@@ -53,7 +53,7 @@ class stockPriceManager:
             raise ValueError("Invalid Feature Selected")
 
         # Convert the original DataFrame into a Windowed DataFrame
-        self.df = self.createdWindowedStockMarketHistory()
+        self.windowed_df = self.createdWindowedStockMarketHistory()
 
     def loadStockMarketHistory(self) -> pd.DataFrame:
         """
@@ -191,20 +191,20 @@ class stockPriceManager:
         # return X_train, y_train, X_validation, y_validation, X_test, y_test
 
         # Define the conditions to belong on either one of the sets (Train or Test)
-        trainCondition = self.df['Target_Date'] < self.validationDate
-        testCondition = self.df['Target_Date'] == self.predictionDate
+        trainCondition = self.windowed_df['Target_Date'] < self.validationDate
+        testCondition = self.windowed_df['Target_Date'] == self.predictionDate
 
         # Get the trainSize and define a point in which to separate the train and validation sets
-        trainSize = self.df[trainCondition].shape[0]
+        trainSize = self.windowed_df[trainCondition].shape[0]
         trainValMargin = int(0.8 * trainSize) 
 
         # print(trainSize, trainValMargin)
         # print(f"Train 0 - {trainValMargin} || Validation {trainValMargin + 1} - {trainSize}")
 
         # Select the data for the train, validation and test sets
-        train_df = self.df[trainCondition].iloc[:trainValMargin]
-        validation_df = self.df[trainCondition].iloc[trainValMargin:]
-        test_df = self.df[testCondition]
+        train_df = self.windowed_df[trainCondition].iloc[:trainValMargin]
+        validation_df = self.windowed_df[trainCondition].iloc[trainValMargin:]
+        test_df = self.windowed_df[testCondition]
 
         # Split the train, validation and test sets into features and target
         X_train = train_df[train_df.columns[:-2]].to_numpy()
@@ -217,3 +217,26 @@ class stockPriceManager:
         y_test = test_df[test_df.columns[-2]].to_numpy()
 
         return X_train, y_train, X_validation, y_validation, X_test, y_test
+    
+    def prepareDataForProphet(self) -> pd.DataFrame:
+        """
+        # Description
+            -> This method aims to prepare the data to be fed to the Prophet model.
+        ---------------------------------------------------------------------------
+        := return: Pandas DataFrame which can be fed directly to a instance of the Prophet Model.
+        """
+        
+        # Select the Date and Closing price Columns
+        df = self.df[['Date', 'Close']]
+
+        # Parse the date strings into datetime objects
+        df['ds'] = pd.to_datetime(df['Date'])
+
+        # Rename Closing Price into y (What we want to predict)
+        df['y'] = df['Close']
+
+        # Remove Unnecessary Columns
+        df=df.drop(columns=['Date', 'Close'])
+
+        # Return Final DataFrame
+        return df
