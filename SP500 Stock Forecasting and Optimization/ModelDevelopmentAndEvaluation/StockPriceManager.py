@@ -131,7 +131,7 @@ class stockPriceManager:
                 self.df.loc[testCondition, 'Close'] = scaler.transform(testClosingPrices)
 
             # Iterate through the DataFrame
-            for index, row in self.df.iloc[:self.df.shape[0] - self.windowSize - 1, :].iterrows():
+            for index, row in self.df.iloc[:self.df.shape[0] - self.windowSize, :].iterrows():
                 currentTimeSequence = {}
                 timeStamp = 0
                 
