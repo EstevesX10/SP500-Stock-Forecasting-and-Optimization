@@ -69,10 +69,18 @@ def createTrainedModelsPaths(stocks:List[str], predictionDates:List[str]) -> dic
             for model in ["LGBM", "LSTM", "Prophet"]:
                 # Update the modelPaths
                 modelPaths.update({
-                    model: f"./ExperimentalResults/TrainedModels/{stock}/{predictionDate}/{model}.pkl"
+                    model: f"./ExperimentalResults/TrainedModels/{stock}/{predictionDate}/{model}/model.pkl"
                 })
+            
+            # Add the Scaler Path
+            modelPaths.update({
+                "Scaler": f"./ExperimentalResults/TrainedModels/{stock}/{predictionDate}/scaler.pkl"
+            })
+
             # Update the Stock Model Paths
-            stockModelPaths.update({predictionDate:modelPaths})
+            stockModelPaths.update({
+                predictionDate:modelPaths
+            })
         # Update the initial dictionary
         modelsPaths.update({stock:stockModelPaths})
 
