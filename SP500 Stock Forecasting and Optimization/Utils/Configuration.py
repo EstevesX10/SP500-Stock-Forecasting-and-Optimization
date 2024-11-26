@@ -99,6 +99,7 @@ def loadInitialPathsConfig() -> dict:
         'Datasets': {
             'SP500-Stocks-Wikipedia':'./Datasets/SP500-Stocks-Wikipedia.csv',
             'SP500-Market-Information':'./Datasets/SP500-Market-Information.csv',
+            'AllStocksClosingPrices':'./Datasets/AllStocksClosingPrices.csv'
         },
     }
 
@@ -118,6 +119,7 @@ def loadFinalPathsConfig(stocks:List[str], predictionDates:List[str]) -> dict:
             'SP500-Market-Information':'./Datasets/SP500-Market-Information.csv',
             'Raw-Stocks-Market-Information': createStocksMarketInformationPaths(stocks=stocks, windowed=False),
             'Windowed-Stocks-Market-Information':createStocksMarketInformationPaths(stocks=stocks, windowed=True),
+            'AllStocksClosingPrices':'./Datasets/AllStocksClosingPrices.csv'
         },
         'ExperimentalResults':createTrainedModelsPaths(stocks=stocks, predictionDates=predictionDates)
     }
