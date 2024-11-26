@@ -59,6 +59,74 @@ class StockPricePredictor:
     # I WANT THAT FOR EACH INSTANCE OF THIS CLASS I CAN PREDICT A GIVEN STOCK PRICE OVER THE SELECTED PREDICTION DATES INSIDE THE PASSED LIST - FOR EACH ML MODEL
     # I WANT TO COMPUTE THE MODELS AND MAYBE ADD A METHOD TO
 
+    def checkFolder(self, path:str) -> None:
+        """
+        # Description
+            -> This method helps ensure that all the nested
+            folders inside a given model path exist.
+        ---------------------------------------------------
+        := param: path - Path in which we we want all the nested folder to exist on.
+        := return: None, since we are only making sure that a path exists.
+        """
+
+        # Define the Folder in which to save the object
+        folderPath = Path("/".join(path.split("/")[:-1]))
+        
+        # Check if the directory exists. If not create it
+        folderPath.mkdir(parents=True, exist_ok=True)
+
+    def trainModels(self):
+        """
+        # Description
+            -> This method creates, trains and performs inference over all the 
+            dates given in the constructor which were to predict the closing price of.
+        ------------------------------------------------------------------------------
+        """
+
+        # Iterate through the dates to predict
+        for dateToPredict in self.datesToPredict:
+            # Define the path in which to save the current prediction date model
+            lstmModelPath = self.pathsConfig["ExperimentalResults"][self.stockSymbol][dateToPredict]["LSTM"]
+            lgbmModelPath = self.pathsConfig["ExperimentalResults"][self.stockSymbol][dateToPredict]["LGBM"]
+
+            # Make sure that each model folder is created
+            self.checkFolder(path=lstmModelPath)
+            self.checkFolder(path=lgbmModelPath)
+
+            # Create a Manager for the current date to predict
+            stockDataManager = stockPriceManager(stockSymbol=self.stockSymbol, feature='Close', windowSize=self.config['window'], predictionDate=dateToPredict, pathsConfig=self.pathsConfig)
+
+            # Split the Data
+            X_train, y_train, X_test, y_test = stockDataManager.trainTestSplit()
+
+            print(stockDataManager.predictionDate, type(X_train))
+
+            # Get the Scaler Path
+            scalerPath = self.pathsConfig["ExperimentalResults"][self.stockSymbol][dateToPredict]["Scaler"]
+
+            # Load the Scaler
+            scaler = loadObject(filePath=scalerPath)
+
+            # Compute the prediction of the closing Price with the LSTM Network Architecture
+            y_pred_LSTM = self.createTrainPredictLSTM(X_train=X_train, y_train=y_train, X_test=X_test, filePath=lstmModelPath)
+
+            # Compute the prediction of the closing Price with a Light Gradient Boosting Machine
+            y_pred_LGBM = self.createLGBM(X_train=X_train, y_train=y_train, X_test=X_test, filePath=lgbmModelPath)
+
+            # Inverse Scale the predicted values
+            y_test = scaler.inverse_transform([y_test])
+            y_pred_LSTM = scaler.inverse_transform(y_pred_LSTM)
+            y_pred_LGBM = scaler.inverse_transform([y_pred_LGBM])
+
+            print(f"{y_test =}")
+            print(f"{y_pred_LSTM =}")
+            print(f"{y_pred_LGBM =}")
+
+            # Process the Predictions - COMPUTE ERROR
+            #TODO
+
+            # break
+
     def createTrainPredictLSTM(self, X_train:np.ndarray, y_train:np.ndarray, X_test:np.ndarray, filePath:str) -> float:
         """
         # Description
@@ -83,7 +151,7 @@ class StockPricePredictor:
             ])
 
             # Compile the model
-            model.compile(optimizer='adam', loss='mean_squared_error',  metrics=['mean_absolute_error'])
+            model.compile(optimizer='adam', loss='mean_squared_error',  metrics=['mean_absolute_error'], run_eagerly=True)
 
             # Train the model
             model.fit(X_train, y_train, batch_size=32, epochs=100)
@@ -99,6 +167,7 @@ class StockPricePredictor:
         # Perform Prediction
         y_pred = model.predict(X_test)
 
+        # Return the scaled prediction
         return y_pred
 
     def createLGBM(self, X_train:np.ndarray, y_train:np.ndarray, X_test:np.ndarray, filePath:str) -> float:
@@ -115,7 +184,7 @@ class StockPricePredictor:
         """
 
         # The model has not yet been computed
-        if not os.path.exists():
+        if not os.path.exists(filePath):
             # Create a instance of the model
             model = LGBMRegressor(
                 objective='regression',
@@ -148,6 +217,7 @@ class StockPricePredictor:
         # Predict using the best iteration
         y_pred = model.predict(X_test, num_iteration=best_iteration)
 
+        # Return the scaled prediction
         return y_pred
 
     def createModel(self):
