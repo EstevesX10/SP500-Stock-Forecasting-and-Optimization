@@ -163,3 +163,4 @@ cython_debug/
 
 # Ignore changes to Datasets
 /SP500 Stock Forecasting and Optimization/Datasets
+/SP500 Stock Forecasting and Optimization/ExperimentalResults
