@@ -95,19 +95,19 @@ class stockPriceManager:
             testCondition = self.df['Date'] == self.predictionDate
 
             # Create a scaler to normalize the data
-            scaler = MinMaxScaler(feature_range=(0, 1))
+            # scaler = MinMaxScaler(feature_range=(0, 1))
 
-            # Normalize the Closing Price for the training set
-            trainClosingPrices = self.df.loc[trainCondition, 'Close'].values.reshape(-1, 1)
-            self.df.loc[trainCondition, 'Close'] = scaler.fit_transform(trainClosingPrices)
+            # # Normalize the Closing Price for the training set
+            # trainClosingPrices = self.df.loc[trainCondition, 'Close'].values.reshape(-1, 1)
+            # self.df.loc[trainCondition, 'Close'] = scaler.fit_transform(trainClosingPrices)
 
-            # Normalize the Closing Price for the validation set
-            validationClosingPrices = self.df.loc[validationCondition, 'Close'].values.reshape(-1, 1)
-            self.df.loc[validationCondition, 'Close'] = scaler.transform(validationClosingPrices)
+            # # Normalize the Closing Price for the validation set
+            # validationClosingPrices = self.df.loc[validationCondition, 'Close'].values.reshape(-1, 1)
+            # self.df.loc[validationCondition, 'Close'] = scaler.transform(validationClosingPrices)
 
-            # Normalize the Closing Price for the test set
-            testClosingPrices = self.df.loc[testCondition, 'Close'].values.reshape(-1, 1)
-            self.df.loc[testCondition, 'Close'] = scaler.transform(testClosingPrices)
+            # # Normalize the Closing Price for the test set
+            # testClosingPrices = self.df.loc[testCondition, 'Close'].values.reshape(-1, 1)
+            # self.df.loc[testCondition, 'Close'] = scaler.transform(testClosingPrices)
 
             # Iterate through the DataFrame
             for index, row in self.df.iloc[:self.df.shape[0] - self.windowSize - 1, :].iterrows():
@@ -168,27 +168,35 @@ class stockPriceManager:
         := retuns: Train and Test Sets to use for Training.
         """
 
-        # # Define the conditions to belong on either one of the sets
-        # trainCondition = self.df['Target_Date'] < self.validationDate
-        # validationCondition = self.df['Target_Date'] == self.validationDate
-        # testCondition = self.df['Target_Date'] == self.predictionDate
+        # Define the conditions to belong on either one of the sets (Train or Test)
+        trainCondition = self.windowed_df['Target_Date'] < self.validationDate
+        testCondition = self.windowed_df['Target_Date'] == self.predictionDate
 
-        # # Select the data for the train, validation and test sets
-        # train_df = self.df[trainCondition]
-        # validation_df = self.df[validationCondition]
-        # test_df = self.df[testCondition]
+        # print(trainSize, trainValMargin)
+        # print(f"Train 0 - {trainValMargin} || Validation {trainValMargin + 1} - {trainSize}")
 
-        # # Split the train, validation and test sets into features and target
-        # X_train = train_df[train_df.columns[:-2]]
-        # y_train = train_df[train_df.columns[-2]]
+        # Select the data for the train, validation and test sets
+        train_df = self.windowed_df[trainCondition]
+        test_df = self.windowed_df[testCondition]
+
+        # Split the train, validation and test sets into features and target
+        X_train = train_df[train_df.columns[:-2]].to_numpy()
+        y_train = train_df[train_df.columns[-2]].to_numpy()
+    
         
-        # X_validation = validation_df[validation_df.columns[:-2]]
-        # y_validation = validation_df[validation_df.columns[-2]]
-        
-        # X_test = test_df[test_df.columns[:-2]].to_numpy()
-        # y_test = test_df[test_df.columns[-2]].to_numpy()
+        X_test = test_df[test_df.columns[:-2]].to_numpy()
+        y_test = test_df[test_df.columns[-2]].to_numpy()
 
-        # return X_train, y_train, X_validation, y_validation, X_test, y_test
+        return X_train, y_train, X_test, y_test
+    
+    def trainValTestSplit(self) -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
+        """
+        # Description
+            -> This method helps split the windowed DataFrame into train, validation and test
+            sets to use in order to train the machine learning algorithms.
+        -------------------------------------------------------------------------
+        := retuns: Train, Validation and Test Sets to use for Training.
+        """
 
         # Define the conditions to belong on either one of the sets (Train or Test)
         trainCondition = self.windowed_df['Target_Date'] < self.validationDate
