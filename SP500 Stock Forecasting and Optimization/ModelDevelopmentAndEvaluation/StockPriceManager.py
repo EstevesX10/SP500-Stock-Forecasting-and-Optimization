@@ -6,6 +6,7 @@ from pathlib import (Path)
 from datetime import datetime as dt
 from sklearn.model_selection import (TimeSeriesSplit)
 from sklearn.preprocessing import (MinMaxScaler, StandardScaler)
+from .pickleFileManagement import (saveObject, loadObject)
 
 class stockPriceManager:
     def __init__(self, stockSymbol:str, feature:str, windowSize:int, predictionDate:str, pathsConfig:dict) -> None:
@@ -85,29 +86,49 @@ class stockPriceManager:
         # Check if the directory exists. If not create it
         windowedStockDataFolder.mkdir(parents=True, exist_ok=True)
 
-        if (not os.path.exists(windowedStockDataFile)):
+        # Define a path to save the scaler on
+        scalerFilePath = self.pathsConfig["ExperimentalResults"][self.stockSymbol][self.predictionDate]["Scaler"]
+
+        # Define the Folder in which to save the scaler
+        scalerFolderPath = Path("/".join(scalerFilePath.split("/")[:-1]))
+        
+        # Check if the directory exists. If not create it
+        scalerFolderPath.mkdir(parents=True, exist_ok=True)
+
+        if (not os.path.exists(windowedStockDataFile) or not os.path.exists(scalerFilePath)):
             # Create a Variable to store all the data regarding the time segments
             data = []
 
             # Select the data used for train, validation and test
-            trainCondition = self.df['Date'] < self.validationDate
-            validationCondition = self.df['Date'] == self.validationDate
-            testCondition = self.df['Date'] == self.predictionDate
+            trainCondition = self.df['Date'] < self.predictionDate
+            testCondition = self.df['Date'] >= self.predictionDate
 
-            # Create a scaler to normalize the data
-            # scaler = MinMaxScaler(feature_range=(0, 1))
+            # The scaler has not yet been computed
+            if not os.path.exists(scalerFilePath):
+                # Create a scaler to normalize the data
+                scaler = MinMaxScaler(feature_range=(0, 1))
 
-            # # Normalize the Closing Price for the training set
-            # trainClosingPrices = self.df.loc[trainCondition, 'Close'].values.reshape(-1, 1)
-            # self.df.loc[trainCondition, 'Close'] = scaler.fit_transform(trainClosingPrices)
+                # Normalize the Closing Price for the training set
+                trainClosingPrices = self.df.loc[trainCondition, 'Close'].values.reshape(-1, 1)
+                self.df.loc[trainCondition, 'Close'] = scaler.fit_transform(trainClosingPrices)
 
-            # # Normalize the Closing Price for the validation set
-            # validationClosingPrices = self.df.loc[validationCondition, 'Close'].values.reshape(-1, 1)
-            # self.df.loc[validationCondition, 'Close'] = scaler.transform(validationClosingPrices)
+                # Normalize the Closing Price for the test set
+                testClosingPrices = self.df.loc[testCondition, 'Close'].values.reshape(-1, 1)
+                self.df.loc[testCondition, 'Close'] = scaler.transform(testClosingPrices)
 
-            # # Normalize the Closing Price for the test set
-            # testClosingPrices = self.df.loc[testCondition, 'Close'].values.reshape(-1, 1)
-            # self.df.loc[testCondition, 'Close'] = scaler.transform(testClosingPrices)
+                # Save the scaler
+                saveObject(objectObtained=scaler, filePath=scalerFilePath)
+            else:
+                # Loaad the Scaler
+                scaler = loadObject(filePath=scalerFilePath)
+
+                # Normalize the Closing Price for the training set
+                trainClosingPrices = self.df.loc[trainCondition, 'Close'].values.reshape(-1, 1)
+                self.df.loc[trainCondition, 'Close'] = scaler.transform(trainClosingPrices)
+
+                # Normalize the Closing Price for the test set
+                testClosingPrices = self.df.loc[testCondition, 'Close'].values.reshape(-1, 1)
+                self.df.loc[testCondition, 'Close'] = scaler.transform(testClosingPrices)
 
             # Iterate through the DataFrame
             for index, row in self.df.iloc[:self.df.shape[0] - self.windowSize - 1, :].iterrows():
@@ -169,7 +190,7 @@ class stockPriceManager:
         """
 
         # Define the conditions to belong on either one of the sets (Train or Test)
-        trainCondition = self.windowed_df['Target_Date'] < self.validationDate
+        trainCondition = self.windowed_df['Target_Date'] < self.predictionDate
         testCondition = self.windowed_df['Target_Date'] == self.predictionDate
 
         # print(trainSize, trainValMargin)
@@ -182,10 +203,15 @@ class stockPriceManager:
         # Split the train, validation and test sets into features and target
         X_train = train_df[train_df.columns[:-2]].to_numpy()
         y_train = train_df[train_df.columns[-2]].to_numpy()
-    
         
+        # X_train = train_df[train_df.columns]
+        # y_train = train_df[train_df.columns]
+    
         X_test = test_df[test_df.columns[:-2]].to_numpy()
         y_test = test_df[test_df.columns[-2]].to_numpy()
+
+        # X_test = test_df[test_df.columns]
+        # y_test = test_df[test_df.columns]
 
         return X_train, y_train, X_test, y_test
     
@@ -236,6 +262,9 @@ class stockPriceManager:
         
         # Select the Date and Closing price Columns
         df = self.df[['Date', 'Close']]
+
+        # Select only the dates we want the models to train on
+        df = df[df['Date'] < self.predictionDate]
 
         # Parse the date strings into datetime objects
         df['ds'] = pd.to_datetime(df['Date'])
