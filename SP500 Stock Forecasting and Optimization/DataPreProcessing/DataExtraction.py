@@ -1,3 +1,4 @@
+from typing import (List)
 import numpy as np
 import pandas as pd
 import os
@@ -228,3 +229,71 @@ def getStockMarketInformation(stockSymbol:str=None, config:dict=None, pathsConfi
 
     # Return the stock history
     return stockHistory
+
+def mergeStocksClosingPrices(stocks:List[str]=None, pathsConfig:dict=None) -> pd.DataFrame:
+    """
+    # Description
+        -> This function helps me merge all the closing Prices
+        of all the stocks within the S&P-500 to better select which ones to use.
+    ----------------------------------------------------------------------------
+    := param: stocks - List with all the stocks to consider.
+    := param: pathsConfig - Dictionary used to manage file paths.
+    := return: DataFrame with all the closing prices for each stock throughout time.
+    """
+
+    # Check if a list of stocks was given
+    if stocks is None:
+        raise ValueError("Missing a List of Stocks whoose Closing Prices we are to merge into a single DataFrame!")
+
+    # Verify if the stocks list contains any elements
+    if len(stocks) == 0:
+        raise ValueError("Empty List of Stocks!")
+
+    # Check if the pathsConfig was also passed on
+    if pathsConfig is None:
+        raise ValueError("Missing a Paths Configuration Dictionary!")
+
+    # Get the path to store the DataFrame with all the stock's closing prices
+    stocksClosingPricesPath = pathsConfig['Datasets']['AllStocksClosingPrices']
+
+    # Check if the DataFrame has already been computed
+    if not os.path.exists(stocksClosingPricesPath):
+        # Get first stock
+        firstStock = stocks[0]
+
+        # Load the first stock's raw market history dataset
+        stocksDataFrame = pd.read_csv(pathsConfig["Datasets"]["Raw-Stocks-Market-Information"][firstStock])[['Date', 'Close']]
+
+        # Define a new column with the name of the stock
+        stocksDataFrame[firstStock] = stocksDataFrame['Close']
+
+        # Remove the Close column as it has been renamed
+        stocksDataFrame = stocksDataFrame.drop(columns=['Close'])
+
+        # Iterate through the DataFrames and load them into memory
+        for stock in stocks[1:]:
+            # Load current stock's market details dataset
+            currentStockDataFrame = pd.read_csv(pathsConfig["Datasets"]["Raw-Stocks-Market-Information"][stock])[['Date', 'Close']]
+
+            # Create a column with the name of the current stock
+            currentStockDataFrame[stock] = currentStockDataFrame['Close']
+
+            # Drop the Close Column
+            currentStockDataFrame = currentStockDataFrame.drop(columns=['Close'])
+
+            # Merge it with the previous DataFrame
+            stocksDataFrame = pd.merge(stocksDataFrame, currentStockDataFrame, on='Date', how='outer')
+
+        # Add NaN where there are dates mismatches
+        stocksDataFrame.fillna(0, inplace=True)
+
+        # Save DataFrame
+        stocksDataFrame.to_csv(stocksClosingPricesPath, sep=',', index=False)
+
+    # Already Computed DataFrame
+    else:
+        # Load Final DataFrame
+        stocksDataFrame = pd.read_csv(stocksClosingPricesPath)
+
+    # Return the Final DataFrame with all the stock's closing prices
+    return stocksDataFrame
