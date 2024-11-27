@@ -5,6 +5,7 @@ import os
 from pathlib import (Path)
 import yfinance as yf
 from datetime import datetime as dt
+from sklearn.preprocessing import (MinMaxScaler)
 
 def extractSP500StocksInformationWikipedia(pathsConfig:dict=None) -> pd.DataFrame:
     """
@@ -297,3 +298,73 @@ def mergeStocksClosingPrices(stocks:List[str]=None, pathsConfig:dict=None) -> pd
 
     # Return the Final DataFrame with all the stock's closing prices
     return stocksDataFrame
+
+def selectStocksToUse(worldWideStocks:pd.DataFrame=None, sp500Stocks:pd.DataFrame=None, numberStocks:int=None) -> pd.DataFrame:
+    """
+    # Description
+        -> This function helps consider all the featured available
+    from both worldWideStocks and sp500Stocks DataFrames to select
+    the best performing stocks.
+    --------------------------------------------------------------
+    := param: worldWideStocks - DataFrame with informations regarding stocks outside the SP500 Market Index.
+    := param: sp500Stocks - DataFrame with data regarding the stocks inserted inside the SP500 Market Index.
+    := param: numberStocks - Amount of Stocks to select from each sector.
+    := return: Pandas DataFrame with identification information of the selected stocks.
+    """
+
+    # Check if the worldWideStocks DataFrame was passed by
+    if worldWideStocks is None:
+        raise ValueError("Missing the overall DataFrame with stocks non-exclusive of the SP-500 Market Index!")
+
+    # Verify if the DataFrame with the stocks of the SP-500 Market Index was passed on
+    if sp500Stocks is None:
+        raise ValueError("Missing the DataFrame with the information regarding the stocks inside the SP-500 Market Index!")
+
+    # Define a default Value for the number of stocks to select from each sector
+    numberStocks = 5 if numberStocks is None else numberStocks
+    
+    # Define a list to store the indentification information of the stocks to use
+    stocksData = []
+    
+    # Merge both DataFrames
+    df = pd.merge(sp500Stocks, worldWideStocks, on="Symbol")
+
+    # Grab all the industry sectors regarding the available stocks
+    industrySectors = np.unique(df["GICS Sector"].to_numpy())
+
+    # Ensure the required metrics are numeric
+    df['% Change'] = df['% Change'].apply(lambda x: float(x.strip('%'))/100)
+
+    # Normalize metrics using Min-Max Scaling
+    scaler = MinMaxScaler()
+    df[['% Change', 'Market Cap', 'Volume']] = scaler.fit_transform(df[['% Change', 'Market Cap', 'Volume']])
+    
+    # Define weights for each metric
+    weights = {'% Change': 0.5, 'Market Cap': 0.3, 'Volume': 0.2}
+    
+    # Calculate Composite Score
+    df['Composite Score'] = (
+        df['% Change'] * weights['% Change'] +
+        df['Market Cap'] * weights['Market Cap'] +
+        df['Volume'] * weights['Volume']
+    )
+
+    # Iterate through the industry Sectors to select some of the best performing ones
+    for industrySector in industrySectors:
+        # Fetch the best N performing stocks for the current industry Sector
+        industryStocks = df[df["GICS Sector"] == industrySector].sort_values(['GICS Sector', 'Composite Score'], ascending=[True, False])[["Symbol", "Name"]].to_numpy()[:numberStocks]
+
+        # Iterate through the selected stocks of the current industry
+        for symbol, name in industryStocks:  
+            # Add the Stock to the list of stocks to use
+            stocksData.append({
+                "Symbol":symbol,
+                "Name":name,
+                "Sector":industrySector
+            })
+
+    # Create a DataFrame with all the selected stocks
+    selectedStocks = pd.DataFrame(data=stocksData)
+
+    # Return the computed DataFrame
+    return selectedStocks
