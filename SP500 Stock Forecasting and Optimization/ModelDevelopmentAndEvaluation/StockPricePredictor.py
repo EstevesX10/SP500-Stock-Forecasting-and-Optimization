@@ -1,6 +1,6 @@
 from typing import (List, Tuple)
-import numpy as np
-import pandas as pd
+import numpy as np # type: ignore
+import pandas as pd # type: ignore
 import os
 from pathlib import (Path)
 from datetime import datetime as dt
@@ -8,10 +8,13 @@ from datetime import datetime as dt
 from tensorflow.keras.models import (Sequential) # type: ignore
 from tensorflow.keras.layers import (Dense, LSTM) # type: ignore
 
-from lightgbm import (LGBMRegressor)
+from lightgbm import (LGBMRegressor) # type: ignore
+from sklearn.ensemble import RandomForestRegressor # type: ignore
+from xgboost import XGBRegressor # type: ignore
 
-from sklearn.preprocessing import (MinMaxScaler, StandardScaler)
-from sklearn.metrics import mean_squared_error
+from sklearn.preprocessing import (MinMaxScaler, StandardScaler) # type: ignore
+from sklearn.metrics import mean_squared_error # type: ignore
+import tensorflow as tf # type: ignore
 
 from .StockPriceManager import (stockPriceManager)
 from .pickleFileManagement import (saveObject, loadObject)
@@ -56,9 +59,6 @@ class StockPricePredictor:
         self.config = config
         self.pathsConfig = pathsConfig
 
-    # I WANT THAT FOR EACH INSTANCE OF THIS CLASS I CAN PREDICT A GIVEN STOCK PRICE OVER THE SELECTED PREDICTION DATES INSIDE THE PASSED LIST - FOR EACH ML MODEL
-    # I WANT TO COMPUTE THE MODELS AND MAYBE ADD A METHOD TO
-
     def checkFolder(self, path:str) -> None:
         """
         # Description
@@ -75,102 +75,117 @@ class StockPricePredictor:
         # Check if the directory exists. If not create it
         folderPath.mkdir(parents=True, exist_ok=True)
 
-    def trainModels(self):
+    def trainModels(self) -> pd.DataFrame:
         """
         # Description
-            -> This method creates, trains and performs inference over all the 
-            dates given in the constructor which were to predict the closing price of.
-        ------------------------------------------------------------------------------
+            -> This method creates, trains and performs inference on all the selected models 
+            over all the dates given in the constructor which were to predict the closing price of.
+        -------------------------------------------------------------------------------------------
+        := return: Pandas DataFrame with the predictions of the closing prices for the selected stock.
         """
 
         # Iterate through the dates to predict
         for dateToPredict in self.datesToPredict:
             # Define the path in which to save the current prediction date model
-            lstmModelPath = self.pathsConfig["ExperimentalResults"][self.stockSymbol][dateToPredict]["LSTM"]
+            randomForestModelPath = self.pathsConfig["ExperimentalResults"][self.stockSymbol][dateToPredict]["RandomForest"]
             lgbmModelPath = self.pathsConfig["ExperimentalResults"][self.stockSymbol][dateToPredict]["LGBM"]
-
+            xgboostModelPath = self.pathsConfig["ExperimentalResults"][self.stockSymbol][dateToPredict]["XGBoost"]
+            lstmModelPath = self.pathsConfig["ExperimentalResults"][self.stockSymbol][dateToPredict]["LSTM"]
+            
             # Make sure that each model folder is created
-            self.checkFolder(path=lstmModelPath)
+            self.checkFolder(path=randomForestModelPath)
             self.checkFolder(path=lgbmModelPath)
-
+            self.checkFolder(path=xgboostModelPath)
+            self.checkFolder(path=lstmModelPath)
+            
             # Create a Manager for the current date to predict
             stockDataManager = stockPriceManager(stockSymbol=self.stockSymbol, feature='Close', windowSize=self.config['window'], predictionDate=dateToPredict, pathsConfig=self.pathsConfig)
 
             # Split the Data
             X_train, y_train, X_test, y_test = stockDataManager.trainTestSplit()
 
-            print(stockDataManager.predictionDate, type(X_train))
-
             # Get the Scaler Path
             scalerPath = self.pathsConfig["ExperimentalResults"][self.stockSymbol][dateToPredict]["Scaler"]
 
             # Load the Scaler
             scaler = loadObject(filePath=scalerPath)
+            
+            # Compute the prediction of the closing Price with a Light Gradient Boosting Machine
+            y_pred_RandomForest = self.createTrainPredictRandomForest(X_train=X_train, y_train=y_train, X_test=X_test, filePath=randomForestModelPath)
+            
+            # Compute the prediction of the closing Price with a Light Gradient Boosting Machine
+            y_pred_LGBM = self.createTrainPredictLGBM(X_train=X_train, y_train=y_train, X_test=X_test, filePath=lgbmModelPath)
+            
+            # Compute the prediction of the closing Price with a Light Gradient Boosting Machine
+            y_pred_XGBoost = self.createTrainPredictXGBoost(X_train=X_train, y_train=y_train, X_test=X_test, filePath=xgboostModelPath)
 
             # Compute the prediction of the closing Price with the LSTM Network Architecture
             y_pred_LSTM = self.createTrainPredictLSTM(X_train=X_train, y_train=y_train, X_test=X_test, filePath=lstmModelPath)
 
-            # Compute the prediction of the closing Price with a Light Gradient Boosting Machine
-            y_pred_LGBM = self.createLGBM(X_train=X_train, y_train=y_train, X_test=X_test, filePath=lgbmModelPath)
-
             # Inverse Scale the predicted values
             y_test = scaler.inverse_transform([y_test])
-            y_pred_LSTM = scaler.inverse_transform(y_pred_LSTM)
+            y_pred_RandomForest = scaler.inverse_transform([y_pred_RandomForest])
             y_pred_LGBM = scaler.inverse_transform([y_pred_LGBM])
-
-            print(f"{y_test =}")
-            print(f"{y_pred_LSTM =}")
-            print(f"{y_pred_LGBM =}")
+            y_pred_XGBoost = scaler.inverse_transform([y_pred_XGBoost])
+            y_pred_LSTM = scaler.inverse_transform(y_pred_LSTM)
+    
+            print(f"{y_test = }")
+            print(f"{y_pred_RandomForest = }")
+            print(f"{y_pred_LGBM = }")
+            print(f"{y_pred_XGBoost = }")
+            print(f"{y_pred_LSTM = }")
+            
 
             # Process the Predictions - COMPUTE ERROR
             #TODO
 
+            # mae = mean_absolute_error(y_test, y_pred)
+            # rmse = np.sqrt(mean_squared_error(y_test, y_pred))
+            # r2 = r2_score(y_test, y_pred)
+
             # break
 
-    def createTrainPredictLSTM(self, X_train:np.ndarray, y_train:np.ndarray, X_test:np.ndarray, filePath:str) -> float:
+    def createTrainPredictRandomForest(self, X_train:np.ndarray, y_train:np.ndarray, X_test:np.ndarray, filePath:str) -> float:
         """
         # Description
-            -> This method creates, compiles, trains and predicts the closing Value 
-            with help of a LSTM Network Architecture (Using a Sequential Approach).
-        ---------------------------------------------------------------------------
+            -> This Method helps create, train and predict the 
+            closing price using a instance of Random Forest Model.
+        ----------------------------------------------------------
         := param: X_train - Features of the train set.
         := param: y_train - Target Values on the train set.
         := param: X_test - Features of the test set.
         := param: filePath - Path to the computed model.
-        := return: The prediction of the trained model.
+        := return: Prediction of the Closing Price which the class is working with.
         """
-        
-        # Check if the model has yet to be computed
+
+        # The model has not yet been computed
         if not os.path.exists(filePath):
-            # Define the Network Architecture
-            model = Sequential([
-                LSTM(128, return_sequences=True, input_shape=(X_train.shape[1], 1)),
-                LSTM(64, return_sequences=False),
-                Dense(25),
-                Dense(1)
-            ])
+            # Create a instance of the model
+            model = RandomForestRegressor(
+                n_estimators=1000,  # Number of trees
+                max_depth=5,        # Maximum depth of each tree
+                random_state=42,    # Reproducibility
+                n_jobs=-1           # Use all available processors
+            )
 
-            # Compile the model
-            model.compile(optimizer='adam', loss='mean_squared_error',  metrics=['mean_absolute_error'], run_eagerly=True)
+            # Train the Model
+            model.fit(X_train, y_train)
 
-            # Train the model
-            model.fit(X_train, y_train, batch_size=32, epochs=100)
-        
             # Save the Model
             saveObject(objectObtained=model, filePath=filePath)
         
-        # The Model has already been computed
+        # The model has already been computed
         else:
-            # Load the Model
+            # Load the model
             model = loadObject(filePath=filePath)
 
-        # Perform Prediction
+        # Predict using the best iteration
         y_pred = model.predict(X_test)
 
         # Return the scaled prediction
         return y_pred
 
-    def createLGBM(self, X_train:np.ndarray, y_train:np.ndarray, X_test:np.ndarray, filePath:str) -> float:
+    def createTrainPredictLGBM(self, X_train:np.ndarray, y_train:np.ndarray, X_test:np.ndarray, filePath:str) -> float:
         """
         # Description
             -> This Method helps create, train and predict the closing price
@@ -219,6 +234,89 @@ class StockPricePredictor:
 
         # Return the scaled prediction
         return y_pred
+    
+    def createTrainPredictXGBoost(self, X_train:np.ndarray, y_train:np.ndarray, X_test:np.ndarray, filePath:str) -> float:
+        """
+        # Description
+            -> This Method helps create, train and predict the 
+            closing price using a instance of XGBoost Model.
+        ------------------------------------------------------
+        := param: X_train - Features of the train set.
+        := param: y_train - Target Values on the train set.
+        := param: X_test - Features of the test set.
+        := param: filePath - Path to the computed model.
+        := return: Prediction of the Closing Price which the class is working with.
+        """
 
-    def createModel(self):
-        raise ValueError("TO BE IMPLEMENTED!")
+        # The model has not yet been computed
+        if not os.path.exists(filePath):
+            # Create a instance of the model
+            model = XGBRegressor(
+                objective='reg:squarederror',
+                n_estimators=1000,
+                learning_rate=0.01,
+                max_depth=5,
+                random_state=42
+            )
+
+            # Train the Model
+            model.fit(X_train, y_train)
+
+            # Save the Model
+            saveObject(objectObtained=model, filePath=filePath)
+        
+        # The model has already been computed
+        else:
+            # Load the model
+            model = loadObject(filePath=filePath)
+
+        # Predict using the best iteration
+        y_pred = model.predict(X_test)
+
+        # Return the scaled prediction
+        return y_pred
+
+    def createTrainPredictLSTM(self, X_train:np.ndarray, y_train:np.ndarray, X_test:np.ndarray, filePath:str) -> float:
+        """
+        # Description
+            -> This method creates, compiles, trains and predicts the closing Value 
+            with help of a LSTM Network Architecture (Using a Sequential Approach).
+        ---------------------------------------------------------------------------
+        := param: X_train - Features of the train set.
+        := param: y_train - Target Values on the train set.
+        := param: X_test - Features of the test set.
+        := param: filePath - Path to the computed model.
+        := return: The prediction of the trained model.
+        """
+        
+        # Check if the model has yet to be computed
+        if not os.path.exists(filePath):
+            # Define the Network Architecture
+            model = Sequential([
+                LSTM(128, return_sequences=True, input_shape=(X_train.shape[1], 1)),
+                LSTM(64, return_sequences=False),
+                Dense(25),
+                Dense(1)
+            ])
+
+            # Compile the model
+            model.compile(optimizer='adam', loss='mean_squared_error',  metrics=['mean_absolute_error'], run_eagerly=True)
+
+            # Train the model
+            model.fit(X_train, y_train, batch_size=32, epochs=50)
+        
+            # Save the Model
+            model.save(filePath)
+            # saveObject(objectObtained=model, filePath=filePath)
+        
+        # The Model has already been computed
+        else:
+            # Load the Model
+            # model = loadObject(filePath=filePath)
+            model = tf.keras.models.load_model(filePath)
+
+        # Perform Prediction
+        y_pred = model.predict(X_test)
+
+        # Return the scaled prediction
+        return y_pred
