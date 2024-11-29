@@ -193,9 +193,6 @@ class stockPriceManager:
         trainCondition = self.windowed_df['Target_Date'] < self.predictionDate
         testCondition = self.windowed_df['Target_Date'] == self.predictionDate
 
-        # print(trainSize, trainValMargin)
-        # print(f"Train 0 - {trainValMargin} || Validation {trainValMargin + 1} - {trainSize}")
-
         # Select the data for the train, validation and test sets
         train_df = self.windowed_df[trainCondition]
         test_df = self.windowed_df[testCondition]
