@@ -56,6 +56,7 @@ class StockPricePredictor:
         # Save the given arguments
         self.stockSymbol = stockSymbol
         self.datesToPredict = datesToPredict
+        self.currentDateIdx = 0
         self.config = config
         self.pathsConfig = pathsConfig
 
@@ -85,19 +86,10 @@ class StockPricePredictor:
         """
 
         # Iterate through the dates to predict
-        for dateToPredict in self.datesToPredict:
-            # Define the path in which to save the current prediction date model
-            randomForestModelPath = self.pathsConfig["ExperimentalResults"][self.stockSymbol][dateToPredict]["RandomForest"]
-            lgbmModelPath = self.pathsConfig["ExperimentalResults"][self.stockSymbol][dateToPredict]["LGBM"]
-            xgboostModelPath = self.pathsConfig["ExperimentalResults"][self.stockSymbol][dateToPredict]["XGBoost"]
-            lstmModelPath = self.pathsConfig["ExperimentalResults"][self.stockSymbol][dateToPredict]["LSTM"]
-            
-            # Make sure that each model folder is created
-            self.checkFolder(path=randomForestModelPath)
-            self.checkFolder(path=lgbmModelPath)
-            self.checkFolder(path=xgboostModelPath)
-            self.checkFolder(path=lstmModelPath)
-            
+        for dateIdx, dateToPredict in enumerate(self.datesToPredict):
+            # Update the date index
+            self.currentDateIdx = dateIdx
+
             # Create a Manager for the current date to predict
             stockDataManager = stockPriceManager(stockSymbol=self.stockSymbol, feature='Close', windowSize=self.config['window'], predictionDate=dateToPredict, pathsConfig=self.pathsConfig)
 
@@ -111,16 +103,16 @@ class StockPricePredictor:
             scaler = loadObject(filePath=scalerPath)
             
             # Compute the prediction of the closing Price with a Light Gradient Boosting Machine
-            y_pred_RandomForest = self.createTrainPredictRandomForest(X_train=X_train, y_train=y_train, X_test=X_test, filePath=randomForestModelPath)
+            y_pred_RandomForest = self.createTrainPredictRandomForest(X_train=X_train, y_train=y_train, X_test=X_test)
             
             # Compute the prediction of the closing Price with a Light Gradient Boosting Machine
-            y_pred_LGBM = self.createTrainPredictLGBM(X_train=X_train, y_train=y_train, X_test=X_test, filePath=lgbmModelPath)
+            y_pred_LGBM = self.createTrainPredictLGBM(X_train=X_train, y_train=y_train, X_test=X_test)
             
             # Compute the prediction of the closing Price with a Light Gradient Boosting Machine
-            y_pred_XGBoost = self.createTrainPredictXGBoost(X_train=X_train, y_train=y_train, X_test=X_test, filePath=xgboostModelPath)
+            y_pred_XGBoost = self.createTrainPredictXGBoost(X_train=X_train, y_train=y_train, X_test=X_test)
 
             # Compute the prediction of the closing Price with the LSTM Network Architecture
-            y_pred_LSTM = self.createTrainPredictLSTM(X_train=X_train, y_train=y_train, X_test=X_test, filePath=lstmModelPath)
+            y_pred_LSTM = self.createTrainPredictLSTM(X_train=X_train, y_train=y_train, X_test=X_test)
 
             # Inverse Scale the predicted values
             y_test = scaler.inverse_transform([y_test])
@@ -145,7 +137,7 @@ class StockPricePredictor:
 
             # break
 
-    def createTrainPredictRandomForest(self, X_train:np.ndarray, y_train:np.ndarray, X_test:np.ndarray, filePath:str) -> float:
+    def createTrainPredictRandomForest(self, X_train:np.ndarray, y_train:np.ndarray, X_test:np.ndarray) -> float:
         """
         # Description
             -> This Method helps create, train and predict the 
@@ -154,10 +146,15 @@ class StockPricePredictor:
         := param: X_train - Features of the train set.
         := param: y_train - Target Values on the train set.
         := param: X_test - Features of the test set.
-        := param: filePath - Path to the computed model.
         := return: Prediction of the Closing Price which the class is working with.
         """
 
+        # Define the path in which to save the current prediction date model
+        filePath = self.pathsConfig["ExperimentalResults"][self.stockSymbol][self.datesToPredict[self.currentDateIdx]]["RandomForest"]
+            
+        # Make sure that each model folder is created
+        self.checkFolder(path=filePath)
+            
         # The model has not yet been computed
         if not os.path.exists(filePath):
             # Create a instance of the model
@@ -185,7 +182,7 @@ class StockPricePredictor:
         # Return the scaled prediction
         return y_pred
 
-    def createTrainPredictLGBM(self, X_train:np.ndarray, y_train:np.ndarray, X_test:np.ndarray, filePath:str) -> float:
+    def createTrainPredictLGBM(self, X_train:np.ndarray, y_train:np.ndarray, X_test:np.ndarray) -> float:
         """
         # Description
             -> This Method helps create, train and predict the closing price
@@ -194,9 +191,14 @@ class StockPricePredictor:
         := param: X_train - Features of the train set.
         := param: y_train - Target Values on the train set.
         := param: X_test - Features of the test set.
-        := param: filePath - Path to the computed model.
         := return: Prediction of the Closing Price which the class is working with.
         """
+
+        # Define the path in which to save the current prediction date model
+        filePath = self.pathsConfig["ExperimentalResults"][self.stockSymbol][self.datesToPredict[self.currentDateIdx]]["LGBM"]
+            
+        # Make sure that each model folder is created
+        self.checkFolder(path=filePath)
 
         # The model has not yet been computed
         if not os.path.exists(filePath):
@@ -235,7 +237,7 @@ class StockPricePredictor:
         # Return the scaled prediction
         return y_pred
     
-    def createTrainPredictXGBoost(self, X_train:np.ndarray, y_train:np.ndarray, X_test:np.ndarray, filePath:str) -> float:
+    def createTrainPredictXGBoost(self, X_train:np.ndarray, y_train:np.ndarray, X_test:np.ndarray) -> float:
         """
         # Description
             -> This Method helps create, train and predict the 
@@ -244,9 +246,14 @@ class StockPricePredictor:
         := param: X_train - Features of the train set.
         := param: y_train - Target Values on the train set.
         := param: X_test - Features of the test set.
-        := param: filePath - Path to the computed model.
         := return: Prediction of the Closing Price which the class is working with.
         """
+
+        # Define the path in which to save the current prediction date model
+        filePath = self.pathsConfig["ExperimentalResults"][self.stockSymbol][self.datesToPredict[self.currentDateIdx]]["XGBoost"]
+            
+        # Make sure that each model folder is created
+        self.checkFolder(path=filePath)
 
         # The model has not yet been computed
         if not os.path.exists(filePath):
@@ -276,7 +283,7 @@ class StockPricePredictor:
         # Return the scaled prediction
         return y_pred
 
-    def createTrainPredictLSTM(self, X_train:np.ndarray, y_train:np.ndarray, X_test:np.ndarray, filePath:str) -> float:
+    def createTrainPredictLSTM(self, X_train:np.ndarray, y_train:np.ndarray, X_test:np.ndarray) -> float:
         """
         # Description
             -> This method creates, compiles, trains and predicts the closing Value 
@@ -285,19 +292,36 @@ class StockPricePredictor:
         := param: X_train - Features of the train set.
         := param: y_train - Target Values on the train set.
         := param: X_test - Features of the test set.
-        := param: filePath - Path to the computed model.
         := return: The prediction of the trained model.
         """
         
+        # Define the path in which to save the current prediction date model
+        filePath = self.pathsConfig["ExperimentalResults"][self.stockSymbol][self.datesToPredict[self.currentDateIdx]]["LSTM"]
+            
+        # Make sure that each model folder is created
+        self.checkFolder(path=filePath)
+
         # Check if the model has yet to be computed
         if not os.path.exists(filePath):
-            # Define the Network Architecture
-            model = Sequential([
-                LSTM(128, return_sequences=True, input_shape=(X_train.shape[1], 1)),
-                LSTM(64, return_sequences=False),
-                Dense(25),
-                Dense(1)
-            ])
+
+            if self.currentDateIdx == 0:
+                # Define the Network Architecture
+                model = Sequential([
+                    LSTM(128, return_sequences=True, input_shape=(X_train.shape[1], 1)),
+                    LSTM(64, return_sequences=False),
+                    Dense(25),
+                    Dense(1)
+                ])
+            else:
+                # Get the Previous Model path
+                previousModelFilePath = self.pathsConfig["ExperimentalResults"][self.stockSymbol][self.datesToPredict[self.currentDateIdx - 1]]["LSTM"]
+                
+                # Load the Previous Model
+                model = tf.keras.models.load_model(previousModelFilePath)
+
+                # Fetch only the new data (New rolling window used for training)
+                X_train = np.array([X_train[-1, :]])
+                y_train = np.array([y_train[-1]])
 
             # Compile the model
             model.compile(optimizer='adam', loss='mean_squared_error',  metrics=['mean_absolute_error'], run_eagerly=True)
@@ -307,12 +331,10 @@ class StockPricePredictor:
         
             # Save the Model
             model.save(filePath)
-            # saveObject(objectObtained=model, filePath=filePath)
         
         # The Model has already been computed
         else:
             # Load the Model
-            # model = loadObject(filePath=filePath)
             model = tf.keras.models.load_model(filePath)
 
         # Perform Prediction
