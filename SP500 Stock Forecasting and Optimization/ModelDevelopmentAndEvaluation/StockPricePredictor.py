@@ -13,7 +13,7 @@ from sklearn.ensemble import RandomForestRegressor # type: ignore
 from xgboost import XGBRegressor # type: ignore
 
 from sklearn.preprocessing import (MinMaxScaler, StandardScaler) # type: ignore
-from sklearn.metrics import mean_squared_error # type: ignore
+from sklearn.metrics import (mean_absolute_error, mean_squared_error, r2_score) # type: ignore
 import tensorflow as tf # type: ignore
 
 from .StockPriceManager import (stockPriceManager)
@@ -76,6 +76,25 @@ class StockPricePredictor:
         # Check if the directory exists. If not create it
         folderPath.mkdir(parents=True, exist_ok=True)
 
+    def _computeErrors(self, y_pred:np.ndarray, y_test:np.ndarray) -> Tuple[float, float]:
+        """
+        # Description
+            -> This Method helps compute all the error metrics used to evaluate the models performance.
+        -----------------------------------------------------------------------------------------------
+        := param: y_pred - Numpy Array with the model's predictions.
+        := param: y_pred - Numpy Array with the real value of the label.
+        := return: Tuple with multiple computed errors, given the input arguments.
+        """
+
+        # Compute the mean absolute value
+        mae = mean_absolute_error(y_test, y_pred)
+
+        # Compute the root mean squared error
+        rmse = np.sqrt(mean_squared_error(y_test, y_pred))
+
+        # Return the computed metrics
+        return (np.round(mae, decimals=3), np.round(rmse, decimals=3))
+
     def trainModels(self) -> pd.DataFrame:
         """
         # Description
@@ -85,57 +104,118 @@ class StockPricePredictor:
         := return: Pandas DataFrame with the predictions of the closing prices for the selected stock.
         """
 
-        # Iterate through the dates to predict
-        for dateIdx, dateToPredict in enumerate(self.datesToPredict):
-            # Update the date index
-            self.currentDateIdx = dateIdx
+        # Define 2 lists: 1 for the Raw Predictions and errors and the other to store the final predictions for the stock throughout January
+        stockRawPredictions, stockPredictions = [], []
 
-            # Create a Manager for the current date to predict
-            stockDataManager = stockPriceManager(stockSymbol=self.stockSymbol, feature='Close', windowSize=self.config['window'], predictionDate=dateToPredict, pathsConfig=self.pathsConfig)
+        # Define the path for the raw predictions of the stock
+        stockRawPredictionsPath = self.pathsConfig["ExperimentalResults"][self.stockSymbol][f"{self.stockSymbol}-Raw-Predictions"]
 
-            # Split the Data
-            X_train, y_train, X_test, y_test = stockDataManager.trainTestSplit()
+        # Get the path for the stock's final predictions for January 2024
+        stockFinalPredictionsPath = self.pathsConfig["ExperimentalResults"][self.stockSymbol][f"{self.stockSymbol}-Predictions"]
 
-            # Get the Scaler Path
-            scalerPath = self.pathsConfig["ExperimentalResults"][self.stockSymbol][dateToPredict]["Scaler"]
+        # Check that the folder for the results exist
+        self.checkFolder(path=stockRawPredictionsPath)
+        self.checkFolder(path=stockFinalPredictionsPath)
 
-            # Load the Scaler
-            scaler = loadObject(filePath=scalerPath)
+        # If the results have yet to be computed, then that what we are ought to do
+        if not (os.path.exists(stockRawPredictionsPath) and os.path.exists(stockFinalPredictionsPath)):
+            # Iterate through the dates to predict
+            for dateIdx, dateToPredict in enumerate(self.datesToPredict):
+                # Update the date index
+                self.currentDateIdx = dateIdx
+
+                # Create a Manager for the current date to predict
+                stockDataManager = stockPriceManager(stockSymbol=self.stockSymbol, feature='Close', windowSize=self.config['window'], predictionDate=dateToPredict, pathsConfig=self.pathsConfig)
+
+                # Split the Data
+                X_train, y_train, X_test, y_test = stockDataManager.trainTestSplit()
+
+                # Get the Scaler Path
+                scalerPath = self.pathsConfig["ExperimentalResults"][self.stockSymbol][dateToPredict]["Scaler"]
+
+                # Load the Scaler
+                scaler = loadObject(filePath=scalerPath)
+                
+                # Compute the prediction of the closing Price with a Light Gradient Boosting Machine
+                y_pred_RandomForest = self.createTrainPredictRandomForest(X_train=X_train, y_train=y_train, X_test=X_test)
+                
+                # Compute the prediction of the closing Price with a Light Gradient Boosting Machine
+                y_pred_LGBM = self.createTrainPredictLGBM(X_train=X_train, y_train=y_train, X_test=X_test)
+                
+                # Compute the prediction of the closing Price with a Light Gradient Boosting Machine
+                y_pred_XGBoost = self.createTrainPredictXGBoost(X_train=X_train, y_train=y_train, X_test=X_test)
+
+                # Compute the prediction of the closing Price with the LSTM Network Architecture
+                y_pred_LSTM = self.createTrainPredictLSTM(X_train=X_train, y_train=y_train, X_test=X_test)
+
+                # Inverse Scale the predicted values
+                y_test = scaler.inverse_transform([y_test])
+                y_pred_RandomForest = scaler.inverse_transform([y_pred_RandomForest])
+                y_pred_LGBM = scaler.inverse_transform([y_pred_LGBM])
+                y_pred_XGBoost = scaler.inverse_transform([y_pred_XGBoost])
+                y_pred_LSTM = scaler.inverse_transform(y_pred_LSTM)
+        
+                # Compute the MAE, RMSE and R2 Score for each model prediction
+                maeRandomForest, rmseRandomForest = self._computeErrors(y_pred=y_pred_RandomForest, y_test=y_test)
+                maeLGBM, rmseLGBM = self._computeErrors(y_pred=y_pred_LGBM, y_test=y_test)
+                maeXGBoost, rmseXGBoost = self._computeErrors(y_pred=y_pred_XGBoost, y_test=y_test)
+                maeLSTM, rmseLSTM = self._computeErrors(y_pred=y_pred_LSTM, y_test=y_test)
+
+                # Add these results into the stock's raw predictions list
+                stockRawPredictions.append({
+                    # Date which we are trying to predict
+                    'Date':dateToPredict,
+
+                    # Random Forest Results
+                    'RandomForest':np.round(y_pred_RandomForest.item(), decimals=3),
+                    'mae_RandomForest':maeRandomForest,
+                    'rmse_RandomForest':rmseRandomForest,
+
+                    # LGBM Results
+                    'LGBM':np.round(y_pred_LGBM.item(), decimals=3),
+                    'mae_LGBM':maeLGBM,
+                    'rmse_LGBM':rmseLGBM,
+
+                    # XGBoost Results
+                    'XGBoost':np.round(y_pred_XGBoost.item(), decimals=3),
+                    'mae_XGBoost':maeXGBoost,
+                    'rmse_XGBoost':rmseXGBoost,
+
+                    # LSTM Results
+                    'LSTM':np.round(y_pred_LSTM.item(), decimals=3),
+                    'mae_LSTM':maeLSTM,
+                    'rmse_LSTM':rmseLSTM,
+
+                    # Target Value
+                    'Target':np.round(y_test.item(), decimals=3)
+                })
+
+                # Add the final prediction into the stock prediction's list
+                stockPredictions.append({
+                    # Date which we are trying to predict
+                    'Date':dateToPredict,
+
+                    # Final Prediction for the day
+                    self.stockSymbol: np.round(np.mean([y_pred_RandomForest.item(), y_pred_LGBM.item(), y_pred_XGBoost.item(), y_pred_LSTM.item()]), decimals=3)
+                })
             
-            # Compute the prediction of the closing Price with a Light Gradient Boosting Machine
-            y_pred_RandomForest = self.createTrainPredictRandomForest(X_train=X_train, y_train=y_train, X_test=X_test)
-            
-            # Compute the prediction of the closing Price with a Light Gradient Boosting Machine
-            y_pred_LGBM = self.createTrainPredictLGBM(X_train=X_train, y_train=y_train, X_test=X_test)
-            
-            # Compute the prediction of the closing Price with a Light Gradient Boosting Machine
-            y_pred_XGBoost = self.createTrainPredictXGBoost(X_train=X_train, y_train=y_train, X_test=X_test)
+            # Create 2 DataFrames with the previously collected data
+            rawPredictions = pd.DataFrame(data=stockRawPredictions)
+            finalPredictions = pd.DataFrame(data=stockPredictions)
 
-            # Compute the prediction of the closing Price with the LSTM Network Architecture
-            y_pred_LSTM = self.createTrainPredictLSTM(X_train=X_train, y_train=y_train, X_test=X_test)
+            # Save the DataFrames
+            rawPredictions.to_csv(stockRawPredictionsPath, sep=',', index=False)
+            finalPredictions.to_csv(stockFinalPredictionsPath, sep=',', index=False)
 
-            # Inverse Scale the predicted values
-            y_test = scaler.inverse_transform([y_test])
-            y_pred_RandomForest = scaler.inverse_transform([y_pred_RandomForest])
-            y_pred_LGBM = scaler.inverse_transform([y_pred_LGBM])
-            y_pred_XGBoost = scaler.inverse_transform([y_pred_XGBoost])
-            y_pred_LSTM = scaler.inverse_transform(y_pred_LSTM)
-    
-            print(f"{y_test = }")
-            print(f"{y_pred_RandomForest = }")
-            print(f"{y_pred_LGBM = }")
-            print(f"{y_pred_XGBoost = }")
-            print(f"{y_pred_LSTM = }")
-            
+        else:
+            # Load the DataFrame with the Raw Predictions
+            rawPredictions = pd.read_csv(stockRawPredictionsPath)
 
-            # Process the Predictions - COMPUTE ERROR
-            #TODO
+            # Load the DataFrame with the Final Predictions
+            finalPredictions = pd.read_csv(stockFinalPredictionsPath)
 
-            # mae = mean_absolute_error(y_test, y_pred)
-            # rmse = np.sqrt(mean_squared_error(y_test, y_pred))
-            # r2 = r2_score(y_test, y_pred)
-
-            # break
+        # Return the Final Predictions DataFrame with all the closing price predictions for January 2024
+        return rawPredictions, finalPredictions
 
     def createTrainPredictRandomForest(self, X_train:np.ndarray, y_train:np.ndarray, X_test:np.ndarray) -> float:
         """
@@ -303,7 +383,7 @@ class StockPricePredictor:
 
         # Check if the model has yet to be computed
         if not os.path.exists(filePath):
-
+            # This is the first model - Used for predictions on the first day
             if self.currentDateIdx == 0:
                 # Define the Network Architecture
                 model = Sequential([
@@ -312,6 +392,7 @@ class StockPricePredictor:
                     Dense(25),
                     Dense(1)
                 ])
+            # We can use the model from the previous iteration
             else:
                 # Get the Previous Model path
                 previousModelFilePath = self.pathsConfig["ExperimentalResults"][self.stockSymbol][self.datesToPredict[self.currentDateIdx - 1]]["LSTM"]
