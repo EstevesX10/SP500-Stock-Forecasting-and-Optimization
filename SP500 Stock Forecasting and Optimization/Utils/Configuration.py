@@ -97,6 +97,11 @@ def createTrainedModelsPaths(stocks:List[str], predictionDates:List[str]) -> dic
         # Update the initial dictionary
         modelsPaths.update({stock:stockModelPaths})
 
+    # Define a path for the Final Stock Predictions
+    modelsPaths.update({
+        "Final-Predictions":"./ExperimentalResults/Final-Predictions.csv"
+    })
+
     # Return the Models Paths Dictionary
     return modelsPaths
 
