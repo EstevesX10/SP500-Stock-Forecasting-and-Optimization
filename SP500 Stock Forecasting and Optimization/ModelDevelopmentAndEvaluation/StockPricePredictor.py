@@ -13,7 +13,7 @@ from sklearn.ensemble import RandomForestRegressor # type: ignore
 from xgboost import XGBRegressor # type: ignore
 
 from sklearn.preprocessing import (MinMaxScaler, StandardScaler) # type: ignore
-from sklearn.metrics import (mean_absolute_error, mean_squared_error, r2_score) # type: ignore
+from sklearn.metrics import (mean_absolute_error, mean_absolute_percentage_error) # type: ignore
 import tensorflow as tf # type: ignore
 
 from .StockPriceManager import (stockPriceManager)
@@ -88,20 +88,20 @@ class StockPricePredictor:
 
         # Compute the mean absolute value
         mae = mean_absolute_error(y_test, y_pred)
-
-        # Compute the root mean squared error
-        rmse = np.sqrt(mean_squared_error(y_test, y_pred))
+        
+        # Compute the mean absolute percentage error
+        mape = mean_absolute_percentage_error(y_test, y_pred) * 100
 
         # Return the computed metrics
-        return (np.round(mae, decimals=3), np.round(rmse, decimals=3))
+        return (np.round(mae, decimals=3), np.round(mape, decimals=3))
 
-    def trainModels(self) -> pd.DataFrame:
+    def trainModels(self) -> Tuple[pd.DataFrame, pd.DataFrame]:
         """
         # Description
             -> This method creates, trains and performs inference on all the selected models 
             over all the dates given in the constructor which were to predict the closing price of.
         -------------------------------------------------------------------------------------------
-        := return: Pandas DataFrame with the predictions of the closing prices for the selected stock.
+        := return: Pandas DataFrames with the predictions of the closing prices for the selected stock (both Raw and Final).
         """
 
         # Define 2 lists: 1 for the Raw Predictions and errors and the other to store the final predictions for the stock throughout January
@@ -155,11 +155,11 @@ class StockPricePredictor:
                 y_pred_XGBoost = scaler.inverse_transform([y_pred_XGBoost])
                 y_pred_LSTM = scaler.inverse_transform(y_pred_LSTM)
         
-                # Compute the MAE, RMSE and R2 Score for each model prediction
-                maeRandomForest, rmseRandomForest = self._computeErrors(y_pred=y_pred_RandomForest, y_test=y_test)
-                maeLGBM, rmseLGBM = self._computeErrors(y_pred=y_pred_LGBM, y_test=y_test)
-                maeXGBoost, rmseXGBoost = self._computeErrors(y_pred=y_pred_XGBoost, y_test=y_test)
-                maeLSTM, rmseLSTM = self._computeErrors(y_pred=y_pred_LSTM, y_test=y_test)
+                # Compute the MAE and the Mean Absolute Percentage Error for each model prediction
+                maeRandomForest, mapeRandomForest = self._computeErrors(y_pred=y_pred_RandomForest.flatten(), y_test=y_test.flatten())
+                maeLGBM, mapeLGBM = self._computeErrors(y_pred=y_pred_LGBM, y_test=y_test)
+                maeXGBoost, mapeXGBoost = self._computeErrors(y_pred=y_pred_XGBoost, y_test=y_test)
+                maeLSTM, mapeLSTM = self._computeErrors(y_pred=y_pred_LSTM, y_test=y_test)
 
                 # Add these results into the stock's raw predictions list
                 stockRawPredictions.append({
@@ -167,24 +167,24 @@ class StockPricePredictor:
                     'Date':dateToPredict,
 
                     # Random Forest Results
-                    'RandomForest':np.round(y_pred_RandomForest.item(), decimals=3),
-                    'mae_RandomForest':maeRandomForest,
-                    'rmse_RandomForest':rmseRandomForest,
+                    '[Random Forest] Prediction':np.round(y_pred_RandomForest.item(), decimals=3),
+                    '[Random Forest] Mean Absolute Error':maeRandomForest,
+                    '[Random Forest] Mean Absolute Percentage Error (%)':mapeRandomForest,
 
                     # LGBM Results
-                    'LGBM':np.round(y_pred_LGBM.item(), decimals=3),
-                    'mae_LGBM':maeLGBM,
-                    'rmse_LGBM':rmseLGBM,
+                    '[LGBM] Prediction':np.round(y_pred_LGBM.item(), decimals=3),
+                    '[LGBM] Mean Absolute Error':maeLGBM,
+                    '[LGBM] Mean Absolute Percentage Error (%)':mapeLGBM,
 
                     # XGBoost Results
-                    'XGBoost':np.round(y_pred_XGBoost.item(), decimals=3),
-                    'mae_XGBoost':maeXGBoost,
-                    'rmse_XGBoost':rmseXGBoost,
+                    '[XGBoost] Prediction':np.round(y_pred_XGBoost.item(), decimals=3),
+                    '[XGBoost] Mean Absolute Error':maeXGBoost,
+                    '[XGBoost] Mean Absolute Percentage Error (%)':mapeXGBoost,
 
                     # LSTM Results
-                    'LSTM':np.round(y_pred_LSTM.item(), decimals=3),
-                    'mae_LSTM':maeLSTM,
-                    'rmse_LSTM':rmseLSTM,
+                    '[LSTM] Prediction':np.round(y_pred_LSTM.item(), decimals=3),
+                    '[LSTM] Mean Absolute Error':maeLSTM,
+                    '[LSTM] Mean Absolute Percentage Error (%)':mapeLSTM,
 
                     # Target Value
                     'Target':np.round(y_test.item(), decimals=3)
