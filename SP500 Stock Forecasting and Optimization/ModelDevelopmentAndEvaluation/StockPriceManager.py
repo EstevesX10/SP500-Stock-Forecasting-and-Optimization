@@ -229,9 +229,6 @@ class stockPriceManager:
         trainSize = self.windowed_df[trainCondition].shape[0]
         trainValMargin = int(0.8 * trainSize) 
 
-        # print(trainSize, trainValMargin)
-        # print(f"Train 0 - {trainValMargin} || Validation {trainValMargin + 1} - {trainSize}")
-
         # Select the data for the train, validation and test sets
         train_df = self.windowed_df[trainCondition].iloc[:trainValMargin]
         validation_df = self.windowed_df[trainCondition].iloc[trainValMargin:]
