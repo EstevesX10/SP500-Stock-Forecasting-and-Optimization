@@ -54,3 +54,153 @@ def getStocksPredictions(stocks:List[str]=None, pathsConfig:dict=None) -> pd.Dat
 
     # Return the Final DataFrame with the stock's predictions for January 2024
     return stocksDataFrame
+
+def getStocksOpeningPrices(stocks:List[str], pathsConfig:dict) -> pd.DataFrame:
+    """
+    # Description
+        -> This function enables us to collect all the real opening prices from all the stocks.
+    -------------------------------------------------------------------------------------------
+    := param: stocks - List with the Stocks to consider.
+    := param: pathsConfig - Dictionary used to manage file paths.
+    := return: Pandas DataFrame with all the stock's opening prices.
+    """
+
+    # Define the path to store the real opening prices of all the stocks
+    openingPricesPath = pathsConfig['ExperimentalResults']['Stocks-Open-Prices']
+
+    # If the DataFrame has yet to be computed
+    if not os.path.exists(openingPricesPath):
+        # Get the first stock
+        firstStock = stocks[0]
+
+        # Initialize the DataFrame for all the data
+        openingPrices = pd.read_csv(pathsConfig['Datasets']['Raw-Stocks-Market-Information'][firstStock])[['Date', 'Open']]
+
+        # Filter only the dates for January 2024
+        openingPrices = openingPrices[openingPrices['Date'] >= '2024-01-01'][openingPrices['Date'] <= '2024-01-31']
+
+        # Rename the closing prices columns
+        openingPrices = openingPrices.rename(columns={'Open': f'{firstStock}_Open'})
+
+        # Iterate through the available stocks
+        for stock in stocks[1:]:
+            # Load the next stocks opening prices
+            currentStockOpeningPrices = pd.read_csv(pathsConfig['Datasets']['Raw-Stocks-Market-Information'][stock])[['Date', 'Open']]
+
+            # Filter only the dates for January 2024
+            currentStockOpeningPrices = currentStockOpeningPrices[currentStockOpeningPrices['Date'] >= '2024-01-01'][currentStockOpeningPrices['Date'] <= '2024-01-31']
+
+            # Rename the closing prices columns
+            currentStockOpeningPrices = currentStockOpeningPrices.rename(columns={'Open': f'{stock}_Open'})
+
+            # Merge the new DataFrame on the initial one
+            openingPrices = pd.merge(openingPrices, currentStockOpeningPrices, on='Date', how='outer')
+
+        # Save the Final DataFrame 
+        openingPrices.to_csv(openingPricesPath, sep=',', index=False)
+    else:
+        # Load the Previously computed DataFrame
+        openingPrices = pd.read_csv(openingPricesPath)
+
+    # Return the Final DataFrame
+    return openingPrices
+
+def getStocksClosingPrices(stocks:List[str], pathsConfig:dict) -> pd.DataFrame:
+    """
+    # Description
+        -> This function enables us to collect all the real closing prices from all the stocks.
+    -------------------------------------------------------------------------------------------
+    := param: stocks - List with the Stocks to consider.
+    := param: pathsConfig - Dictionary used to manage file paths.
+    := return: Pandas DataFrame with all the stock's opening prices.
+    """
+
+    # Define the path to store the real opening prices of all the stocks
+    closingPricesPath = pathsConfig['ExperimentalResults']['Stocks-Closing-Prices']
+
+    # If the DataFrame has yet to be computed
+    if not os.path.exists(closingPricesPath):
+        # Get the first stock
+        firstStock = stocks[0]
+
+        # Initialize the DataFrame for all the data
+        closingPrices = pd.read_csv(pathsConfig['Datasets']['Raw-Stocks-Market-Information'][firstStock])[['Date', 'Close']]
+
+        # Filter only the dates for January 2024
+        closingPrices = closingPrices[closingPrices['Date'] >= '2024-01-01'][closingPrices['Date'] <= '2024-01-31']
+
+        # Rename the closing prices columns
+        closingPrices = closingPrices.rename(columns={'Close': f'{firstStock}_Close'})
+
+        # Iterate through the available stocks
+        for stock in stocks[1:]:
+            # Load the next stocks closing prices
+            currentStockClosingPrices = pd.read_csv(pathsConfig['Datasets']['Raw-Stocks-Market-Information'][stock])[['Date', 'Close']]
+
+            # Grab only the dates of January 2024
+            currentStockClosingPrices = currentStockClosingPrices[currentStockClosingPrices['Date'] >= '2024-01-01'][currentStockClosingPrices['Date'] <= '2024-01-31']
+
+            # Rename the closing prices columns
+            currentStockClosingPrices = currentStockClosingPrices.rename(columns={'Close': f'{stock}_Close'})
+
+            # Merge the new DataFrame on the initial one
+            closingPrices = pd.merge(closingPrices, currentStockClosingPrices, on='Date', how='outer')
+
+        # Save the Final DataFrame 
+        closingPrices.to_csv(closingPricesPath, sep=',', index=False)
+    else:
+        # Load the Previously computed DataFrame
+        closingPrices = pd.read_csv(closingPricesPath)
+
+    # Return the Final DataFrame
+    return closingPrices
+
+def getStocksVolatility(stocks:List[str], pathsConfig:dict) -> pd.DataFrame:
+    """
+    # Description
+        -> This function enables us to collect all the volatility values from all the stocks.
+    -----------------------------------------------------------------------------------------
+    := param: stocks - List with the Stocks to consider.
+    := param: pathsConfig - Dictionary used to manage file paths.
+    := return: Pandas DataFrame with all the stock's opening prices.
+    """
+
+    # Define the path to store the real opening prices of all the stocks
+    stocksVolatilityPath = pathsConfig['ExperimentalResults']['Stocks-Volatility']
+
+    # If the DataFrame has yet to be computed
+    if not os.path.exists(stocksVolatilityPath):
+        # Get the first stock
+        firstStock = stocks[0]
+
+        # Initialize the DataFrame for all the data
+        volatility = pd.read_csv(pathsConfig['Datasets']['Raw-Stocks-Market-Information'][firstStock])[['Date', 'Volatility']]
+
+        # Filter only the dates for January 2024
+        volatility = volatility[volatility['Date'] >= '2024-01-01'][volatility['Date'] <= '2024-01-31']
+
+        # Rename the closing prices columns
+        volatility = volatility.rename(columns={'Volatility': f'{firstStock}_Volatility'})
+
+        # Iterate through the available stocks
+        for stock in stocks[1:]:
+            # Load the next stocks volatility values
+            currentStockVolatility = pd.read_csv(pathsConfig['Datasets']['Raw-Stocks-Market-Information'][stock])[['Date', 'Volatility']]
+
+            # Filter only the dates for January 2024
+            currentStockVolatility = currentStockVolatility[currentStockVolatility['Date'] >= '2024-01-01'][currentStockVolatility['Date'] <= '2024-01-31']
+
+            # Rename the closing prices columns
+            currentStockVolatility = currentStockVolatility.rename(columns={'Volatility': f'{stock}_Volatility'})
+
+            # Merge the new DataFrame on the initial one
+            volatility = pd.merge(volatility, currentStockVolatility, on='Date', how='outer')
+
+        # Save the Final DataFrame 
+        volatility.to_csv(stocksVolatilityPath, sep=',', index=False)
+    else:
+        # Load the Previously computed DataFrame
+        volatility = pd.read_csv(stocksVolatilityPath)
+
+    # Return the Final DataFrame
+    return volatility
