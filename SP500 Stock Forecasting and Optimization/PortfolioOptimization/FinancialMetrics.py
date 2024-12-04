@@ -54,7 +54,6 @@ def getMoneyInvested(numberStocks:int, stocks:List[float], openingPrices:List[fl
     # Return the money invested on the given Operation
     return investedMoney
 
-
 def getTotalReturn(initialEval:float, finalEval:float) -> float:
     """
     # Description
