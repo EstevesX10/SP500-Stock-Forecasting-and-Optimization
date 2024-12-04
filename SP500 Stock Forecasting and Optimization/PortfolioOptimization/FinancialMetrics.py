@@ -1,8 +1,7 @@
 from typing import (List)
 import numpy as np
 
-# [BEFORE] value
-def computeCurrentPortfolioEvaluation(numberStocks:int, initialValue:float, investment:float, stocks:List[float], closingPrices:List[float]) -> float:
+def getCurrentPortfolioEvaluation(numberStocks:int, initialValue:float, investment:float, stocks:List[float], closingPrices:List[float]) -> float:
     """
     # Description
         -> This function computes the current Portfolio Evaluation based 
@@ -27,7 +26,7 @@ def computeCurrentPortfolioEvaluation(numberStocks:int, initialValue:float, inve
     # Return the current evaluation of the Portfolio
     return currentPortfolioEval
 
-def invested(numberStocks:int, stocks:List[float], openingPrices:List[float]) -> float:
+def getMoneyInvested(numberStocks:int, stocks:List[float], openingPrices:List[float]) -> float:
     """
     # Description
         -> This function allows to compute the amount of money invested given a certain operation.
@@ -70,7 +69,6 @@ def getTotalReturn(initialEval:float, finalEval:float) -> float:
     # Compute and return the investment total return
     return ((finalEval - initialEval) / initialEval) * 100
 
-# BEFORE [ROI]
 def getROI(investment:float, earnings:float) -> float:
     """
     # Description
@@ -84,7 +82,6 @@ def getROI(investment:float, earnings:float) -> float:
     # Compute and return the ROI Value
     return ((earnings - investment) / investment) * 100
 
-# BEFORE [RAR]
 def getRiskAdjustedReturn(avgReturn :float, riskFreeRate:float, avgVolatility:float) -> float:
     """
     # Description
