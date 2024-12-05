@@ -106,3 +106,28 @@ def getRiskAdjustedReturn(avgReturn :float, riskFreeRate:float, avgVolatility:fl
 
     # Compute and Return the Risk Adjusted Return
     return (avgReturn - riskFreeRate) / avgVolatility
+
+def getFinalGains(numberDays:int, portfolioEvaluations:List[float], initialInvestment:float) -> float:
+    """
+    # Description
+        -> This function computes the overall gains obtained 
+        over the N days selected of January 2024.
+    --------------------------------------------------------
+    := param: numberDays - Amount of Days to take a look at.
+    := param: portfolioEvaluations - Portfolio Evaluations at each day of January.
+    := param: initialInvestment - Initial Amount of Capital.
+    := return: The final gains obtained.
+    """
+    
+    # Initialize the Gains to 0
+    gains = 0
+    
+    # Iterate through each day and update the gains
+    for day in range(numberDays):
+        if day == 0:
+            gains += portfolioEvaluations[day] - initialInvestment
+        else:
+            gains += portfolioEvaluations[day] - portfolioEvaluations[day - 1]
+
+    # Return the Gains
+    return gains
