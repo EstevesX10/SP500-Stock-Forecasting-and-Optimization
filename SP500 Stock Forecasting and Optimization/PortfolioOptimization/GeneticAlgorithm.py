@@ -6,37 +6,12 @@ import random
 from functools import (partial)
 import pygad
 from pygad import (GA)
-
+from .utils import (checkFolder)
+from .pickleFileManagement import (saveObject)
+from .jsonFileManagement import (dictToJsonFile)
 from .FinancialMetrics import (getCurrentPortfolioEvaluation, getMoneyInvested, getTotalReturn, getROI, getRiskAdjustedReturn)
 
-def dailyInvestment (numberStocks:int, day:int, current_value:float,
-                     riskFreeRate:float, portfolioEvaluations:List[float], portfolioReturns:List[float], portfolioRiskReturns:List[float],
-                     stocksOpeningPrices:pd.DataFrame, stocksClosingPrices:pd.DataFrame,
-                     stocksPredictedClosingPrices:pd.DataFrame, stocksVolatility:pd.DataFrame) -> Tuple[List[float], List[float], List[float]]:
-    """
-    # Desctiption
-        -> This function performs daily investmente based on the computed 
-        stock's Closing Price Predictions and with help of a genetic algorithm.
-    ---------------------------------------------------------------------------
-    := param: numberStocks - number of selected Stocks.
-    := param: day - i-th Day of January in which to analyse / perform the daily investment upon.
-    := param: riskFreeRate - Rate in which to consider a free risk scenario.
-    := param: portfolioEvaluations - Portfolio Evaluations of the already passed days.
-    := param: portfolioReturns - Percentage of the Portfolio Retuns over the already passed days.
-    := param: portfolioRiskReturns - Percentage of the Portfolio Risk Retuns over the already passed days
-    := param: stocksOpeningPrices - Opening Prices for each selected stock on January 2024.
-    := param: stocksClosingPrices - Closing Prices for each selected stock on January 2024.
-    := param: stocksPredictedClosingPrices - Predicted Closing Prices for each selected stock on January 2024.
-    := param: stocksVolatility - Computed Values for the stock's Volatility on January 2024.
-    := return: Updated Lists for the values, returns and riskReturns.
-    """
-    
-    def on_generation(ga_instance):
-        print(f"Generation {ga_instance.generations_completed} complete") 
-        print(f"Fitness of the best solution: {ga_instance.best_solution()[1]}")
-        time.sleep(1)
-
-    def fitness_func(ga_instance:GA, solution, sol_idx:int) -> float:
+def fitness_func(ga_instance:GA, solution, sol_idx:int) -> float:
         """
         # Description
             -> Fitness Function to be utilized when training the genetic algorithm.
@@ -46,7 +21,15 @@ def dailyInvestment (numberStocks:int, day:int, current_value:float,
         := param: sol_idx
         := return: Fitness Score.
         """
-        
+
+        # Unpack the previously added features
+        day = ga_instance.day
+        numberStocks = ga_instance.numberStocks
+        stocksPredictedClosingPrices = ga_instance.stocksPredictedClosingPrices
+        stocksOpeningPrices = ga_instance.stocksOpeningPrices
+        current_value = ga_instance.current_value
+        riskFreeRate = ga_instance.riskFreeRate
+
         # Get the stocks expected closing prices for the selected day
         exp_prices = stocksPredictedClosingPrices.iloc[day].values 
         
@@ -91,6 +74,43 @@ def dailyInvestment (numberStocks:int, day:int, current_value:float,
         # Return weighted gains
         return gains - riskFreeRate * np.mean(weights)  
 
+def on_generation(ga_instance:GA) -> None:
+    """
+    # Description
+        -> This function helps keep track of the genetic algorithm performance.
+    ---------------------------------------------------------------------------
+    := param: ga_instance - Instance of the Genetic Algorithm
+    := return: None, since we are only showcasing information.
+    """
+
+    print(f"Generation {ga_instance.generations_completed} complete") 
+    print(f"Fitness of the best solution: {ga_instance.best_solution()[1]}")
+    time.sleep(1)
+
+def dailyInvestment (numberStocks:int, day:int, predictionDates:List[str], current_value:float,
+                     riskFreeRate:float, portfolioEvaluations:List[float], portfolioReturns:List[float], portfolioRiskReturns:List[float],
+                     stocksOpeningPrices:pd.DataFrame, stocksClosingPrices:pd.DataFrame,
+                     stocksPredictedClosingPrices:pd.DataFrame, stocksVolatility:pd.DataFrame, pathsConfig:dict) -> Tuple[List[float], List[float], List[float]]:
+    """
+    # Desctiption
+        -> This function performs daily investmente based on the computed 
+        stock's Closing Price Predictions and with help of a genetic algorithm.
+    ---------------------------------------------------------------------------
+    := param: numberStocks - number of selected Stocks.
+    := param: day - i-th Day of January in which to analyse / perform the daily investment upon.
+    := param: predictionDates - List of the Dates to consider.
+    := param: riskFreeRate - Rate in which to consider a free risk scenario.
+    := param: portfolioEvaluations - Portfolio Evaluations of the already passed days.
+    := param: portfolioReturns - Percentage of the Portfolio Retuns over the already passed days.
+    := param: portfolioRiskReturns - Percentage of the Portfolio Risk Retuns over the already passed days
+    := param: stocksOpeningPrices - Opening Prices for each selected stock on January 2024.
+    := param: stocksClosingPrices - Closing Prices for each selected stock on January 2024.
+    := param: stocksPredictedClosingPrices - Predicted Closing Prices for each selected stock on January 2024.
+    := param: stocksVolatility - Computed Values for the stock's Volatility on January 2024.
+    := param: pathsConfig - Dictionary used to manage file paths.
+    := return: Updated Lists for the values, returns and riskReturns.
+    """
+    
     # Drop the date Column from the given DataFrames
     stocksOpeningPrices = stocksOpeningPrices.drop(columns=['Date'])
     stocksClosingPrices = stocksClosingPrices.drop(columns=['Date'])
@@ -113,7 +133,7 @@ def dailyInvestment (numberStocks:int, day:int, current_value:float,
 
     indices = random.sample(indices, min(5, len(indices)))
     gene_space = [{'low': 0.00, 'high': 20.00} if i in indices else {'low': 0.00, 'high': 0.00} for i in range(numberStocks)]
-    
+
     # Define a instance of the Genetic Algorithm
     ga_instance = pygad.GA(
         num_generations=50,             # Number of iterations of the genetic model
@@ -129,19 +149,34 @@ def dailyInvestment (numberStocks:int, day:int, current_value:float,
         keep_parents=2,
         crossover_type="single_point",
         mutation_type="random",
-        mutation_percent_genes=100,     #Percentage of the weights that can be altered at each iteraction
-        on_generation=on_generation
+        mutation_percent_genes=70,     # Percentage of the weights that can be altered at each iteraction
+        on_generation=on_generation,
     )
 
-    # fitness_function = partial(fitness_func, ga_instance=ga_instance, numberStocks=numberStocks, day=day, current_value=current_value, stocksOpeningPrices=stocksOpeningPrices, stocksPredictedClosingPrices=stocksPredictedClosingPrices)
-    fitness_function = partial(fitness_func, ga_instance=ga_instance)
+    # Attach custom data as attributes to the GA instance
+    ga_instance.numberStocks = numberStocks
+    ga_instance.day = day
+    ga_instance.current_value = current_value
+    ga_instance.riskFreeRate = riskFreeRate
+    ga_instance.stocksOpeningPrices = stocksOpeningPrices
+    ga_instance.stocksPredictedClosingPrices = stocksPredictedClosingPrices
     
     # Run the Genetic Algorithm
     ga_instance.run()
     
+    # Ensure the path to the results exists
+    checkFolder(path=pathsConfig['ExperimentalResults']['Genetic-Algorithm-Results'][predictionDates[day]]['Genetic-Algorithm'])
+
+    # Save the Genetic Algorithm
+    saveObject(objectObtained=ga_instance, filePath=pathsConfig['ExperimentalResults']['Genetic-Algorithm-Results'][predictionDates[day]]['Genetic-Algorithm'])
+
+    # Plot the fitness variation
     ga_instance.plot_fitness()
 
+    # Update the initial value
     initial_value = current_value
+
+    # Update the current solution
     solution = ga_instance.best_weights
 
     # Get Financial Metrics
@@ -166,6 +201,21 @@ def dailyInvestment (numberStocks:int, day:int, current_value:float,
     print(f"Return on Investment: {ret_on_inv:.2f}%")
     print(f"Risk-Adjusted Return: {risk_ret:.2f}%")
     print()
+
+    # Define a dictionary with the results
+    results = {
+        f"Day": day,
+        f"Inicial value": initial_value,
+        f"Current value": current_value,
+        f"Actions Investment": solution,
+        f"Invested Money": np.round(investment, decimals=2),
+        f"Total Return": np.round(total_returns, decimals=2),
+        f"Return on Investment": np.round(ret_on_inv, decimals=2),
+        f"Risk-Adjusted Return": np.round(risk_ret, decimals=2)
+    }
+
+    # Save the Results
+    dictToJsonFile(dictionary=results, filePath=pathsConfig['ExperimentalResults']['Genetic-Algorithm-Results'][predictionDates[day]]['Results'])
 
     # Return updated lists
     return portfolioEvaluations, portfolioReturns, portfolioRiskReturns
