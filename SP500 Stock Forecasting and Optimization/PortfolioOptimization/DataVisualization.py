@@ -1,7 +1,7 @@
 from typing import (Tuple, List)
 import matplotlib.pyplot as plt
 
-def plotPortfolioPerformance(days:List[str], values:List[float], returns:List[float], riskReturns:List[float]) -> None:
+def plotPortfolioPerformance(days:List[str], portfolioEvaluations:List[float], portfolioReturns:List[float], portfolioRiskReturns:List[float]) -> None:
     """
     # Description
         -> This function aims to plot the Portfolio Performance over
@@ -18,7 +18,7 @@ def plotPortfolioPerformance(days:List[str], values:List[float], returns:List[fl
     fig, axs = plt.subplots(1, 3, figsize=(16, 4))
 
     # Plot the Returns
-    axs[0].plot(days, values, label="$")
+    axs[0].plot(days, portfolioEvaluations, label="$", color="#138d75")
     axs[0].set_title("Portfolio Evaluation")
     axs[0].set_xlabel("Days")
     axs[0].set_ylabel("Amount ($)")
@@ -29,7 +29,7 @@ def plotPortfolioPerformance(days:List[str], values:List[float], returns:List[fl
     plt.xticks(rotation=-45, ha='left', fontsize=8) 
 
     # Plot the Returns
-    axs[1].plot(days, returns, label="Return")
+    axs[1].plot(days, portfolioReturns, label="Return", color="#2980b9")
     axs[1].set_title("Return on Investment")
     axs[1].set_xlabel("Days")
     axs[1].set_ylabel("Return (%)")
@@ -40,7 +40,7 @@ def plotPortfolioPerformance(days:List[str], values:List[float], returns:List[fl
     plt.xticks(rotation=-45, ha='left', fontsize=8) 
 
     # Plot the Risk Returns
-    axs[2].plot(days, riskReturns, label="Risk Return", color="orange")
+    axs[2].plot(days, portfolioRiskReturns, label="Risk Return", color="#c0392b")
     axs[2].set_title("Risk-Adjusted Return")
     axs[2].set_xlabel("Days")
     axs[2].set_ylabel("Risk-Return (%)")
@@ -50,6 +50,9 @@ def plotPortfolioPerformance(days:List[str], values:List[float], returns:List[fl
     plt.sca(axs[2])
     plt.xticks(rotation=-45, ha='left', fontsize=8) 
     
+    # Add a major title
+    fig.suptitle("[Portfolio Optimization] Performance Evaluation", fontsize=16)
+
     # Adjust layout
     plt.tight_layout()
 
