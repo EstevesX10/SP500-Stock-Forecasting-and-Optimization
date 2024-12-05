@@ -103,6 +103,7 @@ def createTrainedModelsPaths(stocks:List[str], predictionDates:List[str]) -> dic
         "Stocks-Open-Prices":"./ExperimentalResults/Stocks-Open-Prices.csv",
         "Stocks-Closing-Prices":"./ExperimentalResults/Stocks-Closing-Prices.csv",
         "Stocks-Volatility":"./ExperimentalResults/Stocks-Volatility.csv",
+        "Portfolio-Optimization-Results":"./ExperimentalResults/Portfolio-Optimization-Results.csv"
     })
 
     # Return the Models Paths Dictionary
