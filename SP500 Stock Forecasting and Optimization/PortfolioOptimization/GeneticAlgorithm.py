@@ -10,7 +10,7 @@ from pygad import (GA)
 from .FinancialMetrics import (getCurrentPortfolioEvaluation, getMoneyInvested, getTotalReturn, getROI, getRiskAdjustedReturn)
 
 def dailyInvestment (numberStocks:int, day:int, current_value:float,
-                     riskFreeRate:float, values:List[float], returns:List[float], riskReturns:List[float],
+                     riskFreeRate:float, portfolioEvaluations:List[float], portfolioReturns:List[float], portfolioRiskReturns:List[float],
                      stocksOpeningPrices:pd.DataFrame, stocksClosingPrices:pd.DataFrame,
                      stocksPredictedClosingPrices:pd.DataFrame, stocksVolatility:pd.DataFrame) -> Tuple[List[float], List[float], List[float]]:
     """
@@ -20,18 +20,16 @@ def dailyInvestment (numberStocks:int, day:int, current_value:float,
     ---------------------------------------------------------------------------
     := param: numberStocks - number of selected Stocks.
     := param: day - i-th Day of January in which to analyse / perform the daily investment upon.
-    := param: riskFreeRate
-    := param: values
-    := param: returns
-    := param: riskReturns
+    := param: riskFreeRate - Rate in which to consider a free risk scenario.
+    := param: portfolioEvaluations - Portfolio Evaluations of the already passed days.
+    := param: portfolioReturns - Percentage of the Portfolio Retuns over the already passed days.
+    := param: portfolioRiskReturns - Percentage of the Portfolio Risk Retuns over the already passed days
     := param: stocksOpeningPrices - Opening Prices for each selected stock on January 2024.
     := param: stocksClosingPrices - Closing Prices for each selected stock on January 2024.
     := param: stocksPredictedClosingPrices - Predicted Closing Prices for each selected stock on January 2024.
     := param: stocksVolatility - Computed Values for the stock's Volatility on January 2024.
     := return: Updated Lists for the values, returns and riskReturns.
     """
-
-    # global n_comp, inicial_value, current_value, close_prices_exp, open_prices, close_prices, volatility, values, returns, risk_returns
     
     def on_generation(ga_instance):
         print(f"Generation {ga_instance.generations_completed} complete") 
@@ -46,10 +44,8 @@ def dailyInvestment (numberStocks:int, day:int, current_value:float,
         := param: ga_instance
         := param: solution
         := param: sol_idx
-        := return: ...
+        := return: Fitness Score.
         """
-
-        # global close_prices_exp, open_prices, current_value, day
         
         # Get the stocks expected closing prices for the selected day
         exp_prices = stocksPredictedClosingPrices.iloc[day].values 
@@ -58,7 +54,7 @@ def dailyInvestment (numberStocks:int, day:int, current_value:float,
         prices = stocksOpeningPrices.iloc[day].values
         
         # Define the weights based on the current solution
-        weights = np.array(solution, dtype=int)
+        weights = np.array(solution, dtype=float)
 
         # Define the initial money invested, the gains and the amount of stocks invested in
         invested = 0
@@ -92,8 +88,8 @@ def dailyInvestment (numberStocks:int, day:int, current_value:float,
         # Update the best weights
         ga_instance.best_weights = weights
         
-        # Return the gains
-        return gains
+        # Return weighted gains
+        return gains - riskFreeRate * np.mean(weights)  
 
     # Drop the date Column from the given DataFrames
     stocksOpeningPrices = stocksOpeningPrices.drop(columns=['Date'])
@@ -108,7 +104,11 @@ def dailyInvestment (numberStocks:int, day:int, current_value:float,
     
     indices = []
     for i in range (numberStocks):
-        if (exp_prices[i] - prices[i] > 0 and vol[i] < 0.030):
+        try:
+            threshold = np.percentile(stocksVolatility.iloc[:day].values, 25)
+        except:
+            threshold = 0.030
+        if (exp_prices[i] - prices[i] > 0 and vol[i] < threshold):
             indices.append(i)
 
     indices = random.sample(indices, min(5, len(indices)))
@@ -116,20 +116,20 @@ def dailyInvestment (numberStocks:int, day:int, current_value:float,
     
     # Define a instance of the Genetic Algorithm
     ga_instance = pygad.GA(
-        num_generations=50, #Number of iterations of the genetic model
+        num_generations=50,             # Number of iterations of the genetic model
         num_parents_mating=5,
         fitness_func=fitness_func,
         sol_per_pop=10,
-        num_genes=55, #Number of copanies to analyse
+        num_genes=55,                   # Number of copanies to analyse
         gene_type=float,
-        init_range_low=0.00, #Minimum number of stocks bought of a company
-        init_range_high=20.00, #Maximum number of stocks bought of a company
+        init_range_low=0.00,            # Minimum number of stocks bought of a company
+        init_range_high=20.00,          # Maximum number of stocks bought of a company
         gene_space=gene_space,
         parent_selection_type="sss",
         keep_parents=2,
         crossover_type="single_point",
         mutation_type="random",
-        mutation_percent_genes=100, #Percentage of the weights that can be altered at each iteraction
+        mutation_percent_genes=100,     #Percentage of the weights that can be altered at each iteraction
         on_generation=on_generation
     )
 
@@ -152,9 +152,9 @@ def dailyInvestment (numberStocks:int, day:int, current_value:float,
     risk_ret = getRiskAdjustedReturn(avgReturn=total_returns, riskFreeRate=riskFreeRate, avgVolatility=np.mean(vol))
     
     # Update the values, returns and riskReturns
-    values.append(current_value)
-    returns.append(ret_on_inv)
-    riskReturns.append(risk_ret)
+    portfolioEvaluations.append(current_value)
+    portfolioReturns.append(ret_on_inv)
+    portfolioRiskReturns.append(risk_ret)
 
     # Print the Results
     print(f"Day: {day}")
@@ -168,4 +168,4 @@ def dailyInvestment (numberStocks:int, day:int, current_value:float,
     print()
 
     # Return updated lists
-    return values, returns, riskReturns
+    return portfolioEvaluations, portfolioReturns, portfolioRiskReturns
