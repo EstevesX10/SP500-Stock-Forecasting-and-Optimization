@@ -97,12 +97,29 @@ def createTrainedModelsPaths(stocks:List[str], predictionDates:List[str]) -> dic
         # Update the initial dictionary
         modelsPaths.update({stock:stockModelPaths})
 
+    # Initialize a dict for the genetic results
+    geneticResults = {}
+
+    # Add paths for the Genetic Algorithm Results
+    for date in predictionDates:
+        # Define the paths for the current genetic results
+        currentGeneticResults = {
+            'Genetic-Algorithm':f'./ExperimentalResults/GeneticAlgorithmResults/{date}/geneticAlgorithm.pkl',
+            'Results':f'./ExperimentalResults/GeneticAlgorithmResults/{date}/results.json'
+        }
+        
+        # Append the paths to the genetic results dict
+        geneticResults.update({
+            f'{date}':currentGeneticResults
+        })
+
     # Define a path for the Final Stock Predictions
     modelsPaths.update({
         "Final-Predictions":"./ExperimentalResults/Final-Predictions.csv",
         "Stocks-Open-Prices":"./ExperimentalResults/Stocks-Open-Prices.csv",
         "Stocks-Closing-Prices":"./ExperimentalResults/Stocks-Closing-Prices.csv",
         "Stocks-Volatility":"./ExperimentalResults/Stocks-Volatility.csv",
+        "Genetic-Algorithm-Results":geneticResults,
         "Portfolio-Optimization-Results":"./ExperimentalResults/Portfolio-Optimization-Results.csv"
     })
 
