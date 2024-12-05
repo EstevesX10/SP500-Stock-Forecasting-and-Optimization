@@ -65,6 +65,10 @@ def getTotalReturn(initialEval:float, finalEval:float) -> float:
     := return: Total Return of the Investment in %.
     """
 
+    # Prevent Division by 0
+    if initialEval == 0:
+        return 0
+
     # Compute and return the investment total return
     return ((finalEval - initialEval) / initialEval) * 100
 
@@ -77,6 +81,10 @@ def getROI(investment:float, earnings:float) -> float:
     := param: earnings - Final Evaluation of the Portfolio.
     := return: The ROI Value (In Percentage %).
     """
+
+    # Prevent Division by 0
+    if investment == 0:
+        return 0
 
     # Compute and return the ROI Value
     return ((earnings - investment) / investment) * 100
@@ -91,6 +99,10 @@ def getRiskAdjustedReturn(avgReturn :float, riskFreeRate:float, avgVolatility:fl
     := param: avgVolatility - Average Volatility of the Stock.
     := return: The Risk Adjusted Return considering the investment return, volatility and freeRiskRate.
     """
+
+    # Prevent Division by 0
+    if avgVolatility == 0:
+        return 0
 
     # Compute and Return the Risk Adjusted Return
     return (avgReturn - riskFreeRate) / avgVolatility
