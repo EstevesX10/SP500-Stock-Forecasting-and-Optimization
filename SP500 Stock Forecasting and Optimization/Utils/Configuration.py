@@ -172,8 +172,9 @@ def loadInitialSetup() -> dict:
     := return: Dictionary with the initial configuration for the optimization phase of the project.
     """
     return {
-        'initialMoney':10000,
+        'initialBudget':10000,
         'buyFee':1,
         'sellFee':1,
         'limitStocksPerDay':100,
+        'riskFreeRate':0.00959
     }
