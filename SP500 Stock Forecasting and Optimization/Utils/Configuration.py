@@ -175,6 +175,6 @@ def loadInitialSetup() -> dict:
         'initialBudget':10000,
         'buyFee':1,
         'sellFee':1,
-        'limitStocksPerDay':100,
+        'limitStocksPerCompanyPerDay':20,
         'riskFreeRate':0.00959
     }
