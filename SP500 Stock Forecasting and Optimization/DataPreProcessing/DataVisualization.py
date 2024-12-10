@@ -96,7 +96,7 @@ def plotStockStats(stockMarketHistory:pd.DataFrame=None, title:str=None) -> None
     axes[0, 0].set_xlabel('Date')
     axes[0, 0].set_ylabel('Price (USD)')
     axes[0, 0].legend()
-    axes[0, 0].grid(True)
+    axes[0, 0].grid(alpha=0.6, linestyle='dashed')
 
     # Plot the Sales Volume
     axes[0, 1].set_title('Sales Volume')
@@ -104,7 +104,7 @@ def plotStockStats(stockMarketHistory:pd.DataFrame=None, title:str=None) -> None
     axes[0, 1].set_xlabel('Date')
     axes[0, 1].set_ylabel('Volume')
     axes[0, 1].legend()
-    axes[0, 1].grid(True)
+    axes[0, 1].grid(alpha=0.6, linestyle='dashed')
 
     # Plot the bollinger bands
     axes[0, 2].set_title("Bollinger Bands")
@@ -115,7 +115,7 @@ def plotStockStats(stockMarketHistory:pd.DataFrame=None, title:str=None) -> None
     axes[0, 2].set_xlabel("Date")
     axes[0, 2].set_ylabel("Price (USD)")
     axes[0, 2].legend()
-    axes[0, 2].grid(True)
+    axes[0, 2].grid(alpha=0.6, linestyle='dashed')
 
     # Plot the Stock Daily Returns
     axes[1, 0].set_title('Daily Returns')
@@ -123,7 +123,7 @@ def plotStockStats(stockMarketHistory:pd.DataFrame=None, title:str=None) -> None
     axes[1, 0].set_xlabel("Date")
     axes[1, 0].set_ylabel("Price (USD)")
     axes[1, 0].legend()
-    axes[1, 0].grid(True)
+    axes[1, 0].grid(alpha=0.6, linestyle='dashed')
 
     # Plot the Stock Window Returns
     axes[1, 1].set_title('Window Returns')
@@ -131,7 +131,7 @@ def plotStockStats(stockMarketHistory:pd.DataFrame=None, title:str=None) -> None
     axes[1, 1].set_xlabel("Date")
     axes[1, 1].set_ylabel("Price (USD)")
     axes[1, 1].legend()
-    axes[1, 1].grid(True)
+    axes[1, 1].grid(alpha=0.6, linestyle='dashed')
 
     # Plot the Stock Volatility
     axes[1, 2].set_title('Volatility')
@@ -139,7 +139,7 @@ def plotStockStats(stockMarketHistory:pd.DataFrame=None, title:str=None) -> None
     axes[1, 2].set_xlabel("Date")
     axes[1, 2].set_ylabel("Volatility (%)")
     axes[1, 2].legend()
-    axes[1, 2].grid(True)
+    axes[1, 2].grid(alpha=0.6, linestyle='dashed')
 
     # Add a global title
     fig.suptitle(title, fontsize=16)
