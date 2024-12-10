@@ -35,15 +35,29 @@ def plotStockClosingPrice(stockMarketHistory:pd.DataFrame=None, title:str=None) 
     plt.figure(figsize=(8, 5))
     plt.subplots_adjust(top=1.25, bottom=1.2)
 
-    # Plot the Closing Prices according to the index values [In theory, the DataFrames contain the dates as their index values]
-    plt.plot(df.index, df['Close'], label='Closing Price')
+    # Plot the Closing Prices
+    plt.plot(df.index, df['Close'], label='Closing Price', color='#29599c')
+
+    # Compute the rolling mean and standard deviation
+    rollingMean = df['Close'].rolling(window=20).mean()
+    rollingStd = df['Close'].rolling(window=20).std()
+
+    # Add a shaded area for standard deviation
+    plt.fill_between(
+        df.index,
+        rollingMean - rollingStd,
+        rollingMean + rollingStd,
+        color='#a7c1cc',
+        alpha=0.5,
+        label="Rolling Std Dev"
+    )
 
     # Populate the title, X and Y axis alongside a legend
     plt.title(title)
     plt.xlabel(None)
     plt.ylabel('Price (USD)')
     plt.legend()
-    plt.grid(True)
+    plt.grid(alpha=0.4, linestyle='dashed')
     plt.tight_layout()
     plt.show()
 
@@ -78,7 +92,7 @@ def plotStockStats(stockMarketHistory:pd.DataFrame=None, title:str=None) -> None
 
     # Plot the Closing Prices according to the index values [In theory, the DataFrames contain the dates as their index values]
     axes[0, 0].set_title('Closing Prices')
-    axes[0, 0].plot(df.index, df['Close'], label='Closing Price', color="blue", alpha=0.6)
+    axes[0, 0].plot(df.index, df['Close'], label='Closing Price', color='#29599c', alpha=0.6)
     axes[0, 0].set_xlabel('Date')
     axes[0, 0].set_ylabel('Price (USD)')
     axes[0, 0].legend()
@@ -86,7 +100,7 @@ def plotStockStats(stockMarketHistory:pd.DataFrame=None, title:str=None) -> None
 
     # Plot the Sales Volume
     axes[0, 1].set_title('Sales Volume')
-    axes[0, 1].plot(df.index, df['Volume'], label="Sales Volume", color="red", alpha=0.6)
+    axes[0, 1].plot(df.index, df['Volume'], label="Sales Volume", color='#f66b6e', alpha=0.6)
     axes[0, 1].set_xlabel('Date')
     axes[0, 1].set_ylabel('Volume')
     axes[0, 1].legend()
@@ -94,9 +108,9 @@ def plotStockStats(stockMarketHistory:pd.DataFrame=None, title:str=None) -> None
 
     # Plot the bollinger bands
     axes[0, 2].set_title("Bollinger Bands")
-    axes[0, 2].plot(df.index, df['Close'], label='Closing Price', color='blue', alpha=0.6)
-    axes[0, 2].plot(df.index, df['UpperBB'], label='Upper Bollinger Band', color='red', alpha=0.6)
-    axes[0, 2].plot(df.index, df['LowerBB'], label='Lower Bollinger Band', color='green', alpha=0.6)
+    axes[0, 2].plot(df.index, df['Close'], label='Closing Price', color='#29599c', alpha=0.6)
+    axes[0, 2].plot(df.index, df['UpperBB'], label='Upper Bollinger Band', color='#f66b6e', alpha=0.6)
+    axes[0, 2].plot(df.index, df['LowerBB'], label='Lower Bollinger Band', color='#4cb07a', alpha=0.6)
     axes[0, 2].fill_between(df.index, df['LowerBB'], df['UpperBB'], color='gray', alpha=0.2)
     axes[0, 2].set_xlabel("Date")
     axes[0, 2].set_ylabel("Price (USD)")
@@ -105,7 +119,7 @@ def plotStockStats(stockMarketHistory:pd.DataFrame=None, title:str=None) -> None
 
     # Plot the Stock Daily Returns
     axes[1, 0].set_title('Daily Returns')
-    axes[1, 0].plot(df.index, df['Daily_Return'], label='Daily Return', color='blue', alpha=0.6)
+    axes[1, 0].plot(df.index, df['Daily_Return'], label='Daily Return', color='#29599c', alpha=0.6)
     axes[1, 0].set_xlabel("Date")
     axes[1, 0].set_ylabel("Price (USD)")
     axes[1, 0].legend()
@@ -113,7 +127,7 @@ def plotStockStats(stockMarketHistory:pd.DataFrame=None, title:str=None) -> None
 
     # Plot the Stock Window Returns
     axes[1, 1].set_title('Window Returns')
-    axes[1, 1].plot(df.index, df['Window_Return'], label='Window Return', color='green', alpha=0.6)
+    axes[1, 1].plot(df.index, df['Window_Return'], label='Window Return', color='#4cb07a', alpha=0.6)
     axes[1, 1].set_xlabel("Date")
     axes[1, 1].set_ylabel("Price (USD)")
     axes[1, 1].legend()
@@ -121,9 +135,9 @@ def plotStockStats(stockMarketHistory:pd.DataFrame=None, title:str=None) -> None
 
     # Plot the Stock Volatility
     axes[1, 2].set_title('Volatility')
-    axes[1, 2].plot(df.index, df['Volatility'], label='Volatility', color='green', alpha=0.6)
+    axes[1, 2].plot(df.index, df['Volatility'], label='Volatility', color='#4cb07a', alpha=0.6)
     axes[1, 2].set_xlabel("Date")
-    axes[1, 2].set_ylabel("Price (USD)")
+    axes[1, 2].set_ylabel("Volatility (%)")
     axes[1, 2].legend()
     axes[1, 2].grid(True)
 
