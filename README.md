@@ -74,7 +74,7 @@ If you're interested in inspecting and executing this project yourself, you'll n
     <img src="./SP500 Stock Forecasting and Optimization/Assets/Warning.png" width="15%" height="15%" />
 </p>
 
-Since GitHub has **file size limits**, we've made them all available in a Cloud Storage provided by Google Drive which you can access [here](https://drive.google.com/drive/folders/1j0vk_fECU9AtXVbL8Dczo14iwfzoCYNJ?usp=sharing).
+Since GitHub has **file size limits**, we've made them all available in a Cloud Storage provided by Google Drive which you can access [here](https://drive.google.com/drive/folders/1j0vk_fECU9AtXVbL8Dczo14iwfzoCYNJ?usp=drive_link).
 
 ## Project Results
 
