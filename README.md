@@ -1,6 +1,6 @@
 <div align="center">
 
-# Labs AI & DS | S&P-500 (SPX)
+# Labs AI & DS | S&P-500
 
 ## Stock Forecasting and Optimization
 
