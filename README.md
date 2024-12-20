@@ -22,16 +22,16 @@
 <br/>
 
 <div align="center">
-    <a href="https://github.com/EstevesX10/_INSERT_REPO_/blob/main/LICENSE">
-        <img src="https://img.shields.io/github/license/EstevesX10/_INSERT_REPO_?style=flat&logo=gitbook&logoColor=038382&label=License&color=038382">
+    <a href="https://github.com/EstevesX10/SP500-Stock-Forecasting-and-Optimization/blob/main/LICENSE">
+        <img src="https://img.shields.io/github/license/EstevesX10/SP500-Stock-Forecasting-and-Optimization?style=flat&logo=gitbook&logoColor=038382&label=License&color=038382">
     </a>
     <a href="">
-        <img src="https://img.shields.io/github/repo-size/EstevesX10/_INSERT_REPO_?style=flat&logo=googlecloudstorage&logoColor=038382&logoSize=auto&label=Repository%20Size&color=038382">
+        <img src="https://img.shields.io/github/repo-size/EstevesX10/SP500-Stock-Forecasting-and-Optimization?style=flat&logo=googlecloudstorage&logoColor=038382&logoSize=auto&label=Repository%20Size&color=038382">
     </a>
     <a href="">
-        <img src="https://img.shields.io/github/stars/EstevesX10/_INSERT_REPO_?style=flat&logo=adafruit&logoColor=038382&logoSize=auto&label=Stars&color=038382">
+        <img src="https://img.shields.io/github/stars/EstevesX10/SP500-Stock-Forecasting-and-Optimization?style=flat&logo=adafruit&logoColor=038382&logoSize=auto&label=Stars&color=038382">
     </a>
-    <a href="https://github.com/EstevesX10/_INSERT_REPO_/blob/main/DEPENDENCIES.md">
+    <a href="https://github.com/EstevesX10/SP500-Stock-Forecasting-and-Optimization/blob/main/DEPENDENCIES.md">
         <img src="https://img.shields.io/badge/Dependencies-DEPENDENCIES.md-white?style=flat&logo=anaconda&logoColor=038382&logoSize=auto&color=038382"> 
     </a>
 </div>
@@ -48,7 +48,7 @@ This project aims to leverage machine learning algorithms to **predict future st
 
 As a request from ou professor this project was developed using a `Notebook`. Therefore if you're looking forward to test it out yourself, keep in mind to either use a **[Anaconda Distribution](https://www.anaconda.com/)** or a 3rd party software that helps you inspect and execute it.
 
-Therefore, for more informations regarding the **Virtual Environment** used in Anaconda, consider checking the [DEPENDENCIES.md](https://github.com/EstevesX10/_INSERT_REPO_/blob/main/DEPENDENCIES.md) file.
+Therefore, for more informations regarding the **Virtual Environment** used in Anaconda, consider checking the [DEPENDENCIES.md](https://github.com/EstevesX10/SP500-Stock-Forecasting-and-Optimization/blob/main/DEPENDENCIES.md) file.
 
 ### Planned Work
 
