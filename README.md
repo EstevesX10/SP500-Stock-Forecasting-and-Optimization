@@ -7,7 +7,7 @@
 </div>
 
 <p align="center" width="100%">
-    <img src="./SP500 Stock Forecasting and Optimization/Assets/StockTrading.png" width="40%" height="40%" />
+    <img src="./SP500 Stock Forecasting and Optimization/Assets/StockTrading.png" width="40%" />
 </p>
 
 <div align="center">
@@ -71,7 +71,7 @@ To effectively **develop** this project, we have divided it into the following p
 If you're interested in inspecting and executing this project yourself, you'll need access to all the `datasets` we've created.
 
 <p align="center" width="100%">
-    <img src="./SP500 Stock Forecasting and Optimization/Assets/Warning.png" width="15%" height="15%" />
+    <img src="./SP500 Stock Forecasting and Optimization/Assets/Warning.png" width="15%" />
 </p>
 
 Since GitHub has **file size limits**, we've made them all available in a Cloud Storage provided by Google Drive which you can access [here](https://drive.google.com/drive/folders/1j0vk_fECU9AtXVbL8Dczo14iwfzoCYNJ?usp=drive_link).
@@ -100,14 +100,14 @@ We began by examining the **key characteristics** of the `S&P-500 Market Index`,
     </thead>
     <tbody>
         <tr>
-            <td width="50%">
-                <p align="center" width="100%">
-                    <img src="./SP500 Stock Forecasting and Optimization/ExperimentalResults/GICS SectorDistribution.png" width="100%" height="100%" />
+            <td>
+                <p align="center">
+                    <img src="./SP500 Stock Forecasting and Optimization/ExperimentalResults/GICS SectorDistribution.png" width="100%" />
                 </p>
             </td>
             <td width="55%">
-                <p align="center" width="100%">
-                    <img src="./SP500 Stock Forecasting and Optimization/ExperimentalResults/SP500-Closing-Prices.png" width="100%" height="100%" />
+                <p align="center">
+                    <img src="./SP500 Stock Forecasting and Optimization/ExperimentalResults/SP500-Closing-Prices.png" width="100%" />
                 </p>
             </td>
         </tr>
@@ -123,7 +123,7 @@ To illustrate the **methodology** applied to the chosen stocks, we highlight `NV
 Conducted additional **exploratory data analysis** on the stock's market trends through an in-depth examination of key **financial metrics**.
 
 <p align="center" width="100%">
-    <img src="./SP500 Stock Forecasting and Optimization/ExperimentalResults/NVDA-EDApng.png" width="100%" height="100%" />
+    <img src="./SP500 Stock Forecasting and Optimization/ExperimentalResults/NVDA-EDApng.png" width="100%" />
 </p>
 
 #### [Models Performance]
@@ -131,7 +131,7 @@ Conducted additional **exploratory data analysis** on the stock's market trends 
 Using a **20-day rolling window** methodology, we prepared the data to train **several machine learning models**, achieving the following performance **results**:
 
 <p align="center" width="100%">
-    <img src="./SP500 Stock Forecasting and Optimization/ExperimentalResults/NVDA-Models-Performace.png" width="100%" height="100%" />
+    <img src="./SP500 Stock Forecasting and Optimization/ExperimentalResults/NVDA-Models-Performace.png" width="100%" />
 </p>
 
 ### Final Portfolio Performance
@@ -139,7 +139,7 @@ Using a **20-day rolling window** methodology, we prepared the data to train **s
 Finally, leveraging a `genetic algorithm`, we carried out **portfolio optimization** to devise an asset allocation plan. This approach resulted in a **profit** of approximately **$30**, as demonstrated through various financial metrics.
 
 <p align="center" width="100%">
-    <img src="./SP500 Stock Forecasting and Optimization/ExperimentalResults/Final-Portfolio-Evalutaion.png" width="100%" height="100%" />
+    <img src="./SP500 Stock Forecasting and Optimization/ExperimentalResults/Final-Portfolio-Evalutaion.png" width="100%" />
 </p>
 
 Overall, we have developed a **tool** designed to **assist investors in effectively managing their assets**, aiming to support them in making **informed investment decisions**.
